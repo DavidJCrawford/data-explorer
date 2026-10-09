@@ -1,42 +1,153 @@
 ---
-/** A holding page until phase 2 builds the landing page (SPEC §4.1). It is in
- *  the landing page's shape already, and every number on it is computed from
- *  the knowledge base, so it proves the collections are wired end to end. */
+/** The landing page, in The Longest Journey's shape (SPEC §4.1): what the
+ *  subject is, one button into the thing worth doing, the numbers on a
+ *  hairline, and three short paragraphs with their sources under them.
+ *
+ *  Every number and date in the copy is computed from the knowledge base.
+ *  None is typed in, so the page cannot disagree with the trace or the Act. */
 import Base from '@layouts/Base.astro';
-import { SITE_NAME } from '@lib/scope';
-import { articles, rights, totals } from '@lib/knowledge';
+import { u } from '@lib/url';
+import { SITE_NAME, kb, DATA_ACT_ELI } from '@lib/scope';
+import { articles, rights, totals, trace, milestones } from '@lib/knowledge';
+import { words, Words, times, day, month } from '@lib/format';
 
 const A = await articles();
 const R = await rights();
 const T = await totals();
+const TR = await trace();
+const M = await milestones();
+const C = T.composite, G = T.governed;
+
+/* Stops inside the building: every hop before the one that crosses the
+   property line. */
+const inside = TR.hops.findIndex((h) => h.crosses_property_line);
+const applies = M['application'].date;
+const byDesign = M['data-by-design'].date;
+const chargesEnd = M['switching-charges-end'].date;
+
+/* The launch button appears when the trace does. Until phase 4 builds it the
+   page says so instead of linking to nothing. */
+const hasTrace = Object.keys(import.meta.glob('./trace/index.astro')).length > 0;
 ---
 <Base title={SITE_NAME}>
   <div class="wrap section hero">
     <p class="eyebrow">Connected buildings · EU Data Act</p>
     <h1 class="display" style="margin-top:.2em">{SITE_NAME}</h1>
-    <p class="lead" style="margin-top:1.2em">
-      Where a building’s data goes, who holds it at each step, and what the law says its owner is owed there.
-      The site is being built.
+    <p class="lead">
+      Every credential, every door event, every meter reading is a record of how a building works.
+      One door event, followed from the front entrance to the cloud, is
+      copied <span class="nw">{words(C.copies)} times.</span> Since {month(applies)} the EU Data Act
+      has made that data the building owner’s to take and to move.
     </p>
+    <div class="launch">
+      {hasTrace ? (
+        <a class="play plain" href={u('/trace/')}>
+          <svg viewBox="0 0 24 24" aria-hidden="true" width="15" height="15"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>
+          <span>Follow the data</span>
+        </a>
+      ) : (
+        <span class="play waiting" aria-disabled="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true" width="15" height="15"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>
+          <span>Follow the data</span>
+        </span>
+      )}
+      <span class="ui muted">{hasTrace ? 'From the door to the cloud.' : 'The trace is being built.'}</span>
+    </div>
   </div>
 
   <div class="wrap">
     <hr class="rule" />
     <div class="stats">
-      <div class="stat"><div class="eyebrow">Hops from the door</div><div class="value num">{T.hops}</div></div>
-      <div class="stat"><div class="eyebrow">Copies made</div><div class="value num">{T.composite.copies}</div></div>
-      <div class="stat"><div class="eyebrow">Hands, composite / governed</div><div class="value num">{T.composite.hands} / {T.governed.hands}</div></div>
+      <div class="stat"><div class="eyebrow">Stops from the door</div><div class="value num">{T.hops}</div></div>
+      <div class="stat"><div class="eyebrow">Copies made</div><div class="value num">{C.copies}</div></div>
+      <div class="stat"><div class="eyebrow">Holders, many makers</div><div class="value num">{C.hands}</div></div>
+      <div class="stat"><div class="eyebrow">Holders, one maker</div><div class="value num">{G.hands}</div></div>
       <div class="stat"><div class="eyebrow">Data Act articles</div><div class="value num">{A.length}</div></div>
-      <div class="stat"><div class="eyebrow">Rights</div><div class="value num">{R.length}</div></div>
+      <div class="stat"><div class="eyebrow">Rights for the owner</div><div class="value num">{R.length}</div></div>
     </div>
     <hr class="rule" />
   </div>
+
+  <section class="wrap section more">
+    <div class="three-up">
+      <div>
+        <h2 class="eyebrow">Where it goes</h2>
+        <p class="lead">
+          It starts at the reader on the front door. The controller logs it, the server in the comms room
+          stores it, and the cloud keeps a replica and a backup. From there it can feed an AI model, or go
+          to anyone the owner chooses. {Words(inside)} of its {words(T.hops)} stops are inside the building.
+        </p>
+        <p class="src">
+          <a href={kb('building/the-trace')} rel="noopener">The trace</a> ·
+          <a href={kb('building/the-building')} rel="noopener">The building</a>
+        </p>
+      </div>
+      <div>
+        <h2 class="eyebrow">Who holds it</h2>
+        <p class="lead">
+          Every handoff copies the data. Built from several makers’ parts, the path leaves a copy with
+          {words(C.hands)} companies and changes hands {times(C.seams)}. Run by one company, it leaves a
+          copy with {words(G.hands)}, that company and its host, and changes hands {times(G.seams)}.
+          Both make {words(C.copies)} copies.
+        </p>
+        <p class="src">
+          <a href={kb('thesis/copies-and-hands')} rel="noopener">Copies and hands</a> ·
+          <a href={kb('thesis/the-two-archetypes')} rel="noopener">The two archetypes</a> ·
+          an illustrative system
+        </p>
+      </div>
+      <div>
+        <h2 class="eyebrow">What the owner is owed</h2>
+        <p class="lead">
+          In the EU the owner can take that data, free and machine-readable, and send it to any third
+          party. Cloud contracts must say how to leave, and from <span class="nw">{day(chargesEnd)}</span>
+          leaving costs nothing. Devices sold since <span class="nw">{day(byDesign)}</span> must be built
+          so the data can be reached.
+        </p>
+        <p class="src">
+          <a href={DATA_ACT_ELI} rel="noopener">Regulation (EU) 2023/2854</a>,
+          Articles 3, 4, 5 and 29 ·
+          <a href={kb('rights/yours')} rel="noopener">The rights</a>
+        </p>
+      </div>
+    </div>
+  </section>
 </Base>
 
 <style>
+  /* The whole page fits one laptop screen (about 830 px of browser height)
+     without scrolling, as The Longest Journey's does: the spacing and the title
+     scale with the window's height as well as its width, and give way first
+     on a short one. */
   .hero { padding-block: clamp(20px, 3.6vh, 72px) clamp(24px, 3.4vh, 64px); }
   .hero .display { font-size: clamp(2.6rem, min(6vw, 8.6vh), var(--ks-type-display-size)); }
-  .hero .lead { max-width: 50em; text-wrap: pretty; }
+  .hero .lead { margin-top: clamp(.6em, 2vh, 1.2em); max-width: 50em; }
+  .more { padding-block: clamp(20px, 3.4vh, 64px) clamp(6px, .8vh, 40px); }
+  .launch { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: clamp(1rem, 3vh, 2rem) 0 0; }
+  .play {
+    display: inline-flex; align-items: center; gap: 9px;
+    background: var(--ks-ink); color: var(--ks-paper);
+    border-radius: var(--ks-radius-pill);
+    padding: 10px 20px 10px 16px;
+    font-size: var(--ks-type-ui-size); letter-spacing: .04em;
+    transition: background var(--ks-quick) var(--ks-ease), transform var(--ks-quick) var(--ks-ease);
+  }
+  a.play:hover { background: var(--ks-instrument-raised); transform: translateY(-1px); }
+  a.play:focus-visible { outline: 2px solid var(--ks-patina-deep); outline-offset: 3px; }
+  /* Until the trace exists the button is drawn, but as a promise rather than
+     a control: no pointer, no hover, and the line beside it says why. */
+  .play.waiting { background: var(--ks-gray-2); color: var(--ks-text-muted); cursor: default; }
+
   .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: clamp(18px, 3vw, 40px); padding-block: clamp(16px, 2.6vh, 26px); }
   .stat .value { font-size: clamp(1.15rem, 1.6vw, var(--ks-type-title-lg-size)); font-weight: 300; color: var(--ks-ink); line-height: 1.2; margin-top: 2px; }
+  .three-up { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: clamp(24px, 4vw, 48px); }
+  .three-up .lead { margin-top: .7em; font-size: 1.0625rem; line-height: 1.55; }
+  /* Sources sit under each paragraph rather than in it, so the three read as
+     prose. */
+  .src { margin: .7em 0 0; font-size: var(--ks-type-label-size); color: var(--ks-text-faint); }
+  .src a { color: inherit; }
+  .src a:hover { color: var(--ks-ink); }
+  .lead { text-wrap: pretty; }
+  .nw { white-space: nowrap; }
+  @media (prefers-reduced-motion: reduce) { a.play:hover { transform: none; } }
 </style>

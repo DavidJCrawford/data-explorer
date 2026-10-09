@@ -4,8 +4,8 @@
 cloud and shows, at each step, who holds the data and what the building's
 owner is owed.**
 
-- **Status:** phase 1 (scaffold) built 2026-10-09: the site builds from the
-  knowledge base with every check in §5 running. Not yet deployed. §10 is the
+- **Status:** phases 1 and 2 built and deployed 2026-10-09: the scaffold,
+  with every check in §5 running, and the landing page. §10 is the
   tracker; [HANDOFF.md](HANDOFF.md) is where it is up to.
 - **Content source:** [Docs/knowledge/](knowledge/index.md), an OKF v0.2
   bundle compiled from the prototype
@@ -407,8 +407,9 @@ Update this list as work lands; log detail in [knowledge/log.md](knowledge/log.m
 - [x] Repository created, pushed, and the holding page deployed
 
 **Phase 2: landing page**
-- [ ] Landing page with numbers computed from the bundle
-- [ ] Fits one laptop screen; under 25 KB
+- [x] Landing page with numbers computed from the bundle
+- [x] Fits one laptop screen (1440 × 830 exactly); about 7 KB gzipped before fonts
+- [ ] Long-form article link, once the article exists (§8)
 
 **Phase 3: the section drawing**
 - [ ] Block out the section at real proportions, phone and laptop (§7)

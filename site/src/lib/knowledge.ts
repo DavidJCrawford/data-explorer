@@ -33,3 +33,10 @@ export async function totals() {
     governed: last(ledger(t.hops, 'governed')),
   };
 }
+
+/** The Data Act's milestones by id. */
+export async function milestones() {
+  const e = await getEntry('milestones', 'milestones');
+  if (!e) throw new Error('Docs/knowledge/law/eu-data-act/milestones.md is missing');
+  return Object.fromEntries(e.data.milestones.map((m) => [m.id, m]));
+}

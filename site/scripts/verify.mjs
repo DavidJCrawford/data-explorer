@@ -152,6 +152,22 @@ function verifyBundle() {
   for (const c of instruments.values()) for (const id of c.data.attaches_to ?? []) needComponent(c, id, 'attaches_to');
 
   verifyTrace(concepts.get('building/the-trace'), components);
+  verifyMilestones(concepts.get('law/eu-data-act/milestones'), articles);
+}
+
+/** The milestones the site computes with, against the table a reader sees. */
+function verifyMilestones(m, articles) {
+  if (!m) return fail('law/eu-data-act/milestones.md', 'missing');
+  const list = m.data.milestones ?? [];
+  const iso = (d) => new Date(d).toISOString().slice(0, 10);
+  const rows = [...m.body.matchAll(/^\| (\d{4}-\d{2}-\d{2}) \| ([^|]+?) \|/gm)].map((r) => [r[1], r[2]]);
+  if (rows.length !== list.length) fail(m.rel, `the table has ${rows.length} rows for ${list.length} milestones`);
+  list.forEach((x, i) => {
+    const [date, name] = rows[i] ?? [];
+    if (iso(x.date) !== date || x.name !== name) fail(m.rel, `milestone ${x.id} is ${iso(x.date)} “${x.name}” but the table says ${date} “${name}”`);
+    for (const n of x.articles ?? []) if (!articles.has(n)) fail(m.rel, `milestone ${x.id} names Article ${n}, which does not exist`);
+    if (i > 0 && iso(x.date) < iso(list[i - 1].date)) fail(m.rel, 'milestones are not in date order');
+  });
 }
 
 /** The ledger recomputed from the trace's model, compared with the totals

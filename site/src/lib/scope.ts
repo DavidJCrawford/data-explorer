@@ -11,3 +11,12 @@ export const SUBJECT = {
   /** The jurisdiction the rulebook opens on. */
   jurisdiction: 'eu',
 } as const;
+
+/** Where a concept in the knowledge base can be read. Until phase 6 publishes
+ *  the bundle with the site, that is the repository. Change this one function
+ *  then and every source link follows. */
+const REPO = 'https://github.com/DavidJCrawford/data-explorer/blob/main/Docs/knowledge';
+export const kb = (concept: string): string => `${REPO}/${concept.replace(/^\//, '')}.md`;
+
+/** The Data Act in the Official Journal. */
+export const DATA_ACT_ELI = 'https://eur-lex.europa.eu/eli/reg/2023/2854/oj/eng';

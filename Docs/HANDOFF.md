@@ -1,14 +1,15 @@
 # HANDOFF — Data Explorer
 
-Written 2026-10-09 at the end of phase 1. Read [SPEC.md](SPEC.md) first; its §10
+Written 2026-10-09 at the end of phase 1; updated after phase 2. Read [SPEC.md](SPEC.md) first; its §10
 is the tracker. The content is the knowledge base in [knowledge/](knowledge/index.md).
 
 ## 0. Where this is up to
 
-**Phase 1 is built and not deployed.** The site builds from the knowledge base,
-every check in SPEC §5 runs, and the only page is a holding page in the landing
-page's shape whose numbers come from the bundle. The repository has not been
-created on GitHub; that waits on David.
+**Phases 1 and 2 are built and deployed** at
+https://davidjcrawford.github.io/data-explorer/ from
+`DavidJCrawford/data-explorer`. Pushing `main` deploys. The site builds from
+the knowledge base with every check in SPEC §5 running, and the one page is
+the landing page.
 
 ```bash
 make install   # npm ci in site/
@@ -61,11 +62,27 @@ scripts/check_site.py        every internal link, unchanged from the siblings
 - **The logo is computed** from the trace: the split falls at the hop that
   crosses the property line.
 
+- **Every number and date on the landing page is computed**: counts from the
+  trace's model through `ledger.mjs`, dates from the milestones concept's
+  frontmatter (which verify checks against its table). Small counts are words
+  in prose (`lib/format.ts`: `words`, `Words`, `times`), numerals in stats.
+- **The launch button turns itself on.** It is drawn as a disabled pill until
+  `src/pages/trace/index.astro` exists, then becomes a link (`import.meta.glob`
+  in `index.astro`). Nothing to remember in phase 4.
+- **Source links point at the repository** (`kb()` in `lib/scope.ts`) until
+  phase 6 publishes the bundle with the site; change that one function then.
+- **The landing page fits 1440 × 830 exactly.** Any copy added to it will push
+  it over; cut something to make room. Stat labels must stay on one line at
+  that size (about 20 characters).
+- **The commit identity** for this repository is the GitHub noreply address,
+  set in the repository's own git config, so the public history does not name
+  the author's employer.
+
 ## 3. Next
 
-Phase 2, the landing page (SPEC §4.1). The holding page is already its shape;
-it needs the lead, the launch button (pointing at `/trace/` only once that
-exists), and the three-up with sources.
+Phase 3, the section drawing (SPEC §4.2, `design/the-section-drawing.md`).
+Block out the section at real proportions on a phone and a laptop before
+drawing a single symbol (SPEC §7).
 
 The siblings' HANDOFF lessons apply throughout; SPEC §7 lists the ones that
 bite this project.

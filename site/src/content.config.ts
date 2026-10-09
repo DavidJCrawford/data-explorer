@@ -104,6 +104,20 @@ export const collections = {
     }),
   }),
 
+  /** The Data Act's dates, as data. The rulebook's time axis and the landing
+   *  page's lead read them from here. */
+  milestones: defineCollection({
+    loader: glob({ base: `${BASE}/law/eu-data-act`, pattern: ['milestones.md'] }),
+    schema: concept.extend({
+      milestones: z.array(z.object({
+        id: z.string(),
+        date: z.coerce.date(),
+        name: z.string(),
+        articles: z.array(z.number().int()),
+      })),
+    }),
+  }),
+
   /** The trace: one concept, and the structured model the ledger is computed
    *  from. See lib/ledger.mjs. */
   trace: defineCollection({

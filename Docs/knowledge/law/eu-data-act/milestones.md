@@ -6,6 +6,14 @@ tags: [eu-data-act, dates, timeline]
 legal_review: none
 generated: { by: claude-code/opus-5.5, at: "2026-10-09T00:00:00Z" }
 status: stable
+# The dates the site computes with. The table in the body must agree;
+# site/scripts/verify.mjs checks every row against this list.
+milestones:
+  - { id: entry-into-force, date: 2024-01-11, name: "Entry into force", articles: [50] }
+  - { id: application, date: 2025-09-12, name: "General application", articles: [4, 5, 50] }
+  - { id: data-by-design, date: 2026-09-12, name: "Data by design", articles: [3, 50] }
+  - { id: switching-charges-end, date: 2027-01-12, name: "Switching charges end", articles: [29] }
+  - { id: old-contracts, date: 2027-09-12, name: "Ch. IV reaches old contracts", articles: [13, 50] }
 sources:
   - id: eli
     resource: "https://eur-lex.europa.eu/eli/reg/2023/2854/oj/eng"
