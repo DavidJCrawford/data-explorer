@@ -8,6 +8,12 @@ kind: regulation
 cite: "Regulation (EU) 2024/1689"
 attaches_to: ["cloud-ai", "local-ai"]
 legal_review: none
+# Dated phases, for the rulebook's time axis. verify checks them against
+# the Dates table below.
+phases:
+  - { date: 2025-02-02, what: "prohibited practices apply" }
+  - { date: 2026-08-02, what: "transparency duties apply" }
+  - { date: 2027-12-02, what: "high-risk duties apply (as deferred, May 2026 omnibus)" }
 stale_after: "2027-04-01T00:00:00Z"
 generated: { by: claude-code/opus-5.5, at: "2026-10-09T00:00:00Z" }
 status: draft

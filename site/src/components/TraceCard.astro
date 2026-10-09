@@ -8,6 +8,7 @@
  *  Rights are in the second person by design (policies/editorial-voice.md). */
 import type { TraceData } from '@lib/trace-data';
 import { words } from '@lib/format';
+import { u } from '@lib/url';
 
 interface Props { card: TraceData['cards'][number]; intro?: string; static?: boolean }
 const { card: c, intro, static: isStatic = false } = Astro.props;
@@ -35,7 +36,7 @@ const art = (ns: number[]) => ns.map((n) => `Art. ${n}`).join(' · ');
         <dt class="mono">Owed here</dt>
         <dd>
           <ul class="rights">
-            {c.rights.map((r) => <li><span class="statement">{r.statement}</span> <span class="mono arts">{art(r.articles)}</span></li>)}
+            {c.rights.map((r) => <li><a class="statement plain" href={u(`/rulebook/?sel=${r.id}`)}>{r.statement}</a> <span class="mono arts">{art(r.articles)}</span></li>)}
           </ul>
         </dd>
       </div>
@@ -75,7 +76,8 @@ const art = (ns: number[]) => ns.map((n) => `Art. ${n}`).join(' · ');
   dd { margin: 0; line-height: 1.5; }
   .chosen { color: var(--dse-yours); }
   .rights { list-style: none; margin: 0; padding: 0; display: grid; gap: .35rem; }
-  .rights .statement { color: var(--ks-instrument-text); }
+  .rights .statement { color: var(--ks-instrument-text); text-decoration: underline; text-decoration-color: var(--ks-instrument-rule); text-underline-offset: 3px; }
+  .rights .statement:hover { text-decoration-color: var(--ks-instrument-text); }
   .rights .arts { white-space: nowrap; color: var(--dse-event); letter-spacing: .06em; }
   .ask { color: var(--ks-instrument-text); }
   .alt { border-top: 1px solid var(--ks-instrument-rule); padding-top: .8rem; display: grid; gap: .35rem; color: var(--ks-instrument-muted); line-height: 1.5; }

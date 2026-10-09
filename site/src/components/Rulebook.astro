@@ -1,0 +1,301 @@
+---
+/** The rulebook (SPEC §4.3): the law laid along the same stops as the trace.
+ *  Not a graph: a table that moves in time.
+ *
+ *  Columns are the trace's stops; rows are what the owner is owed and what to
+ *  ask. Every jurisdiction's rows and every row's detail are rendered here at
+ *  build time; scripts/rulebook.ts switches jurisdiction, moves the date and
+ *  opens the drawer. Without JavaScript the table reads as it stands on the
+ *  day the site was built, and every detail is printed below it. */
+import Logo from '@components/Logo.astro';
+import Disclaimer from '@components/Disclaimer.astro';
+import { rulebookData } from '@lib/rulebook-data';
+import { stateOn, phaseLine, longDate } from '@lib/phases';
+import { u } from '@lib/url';
+import { kb } from '@lib/scope';
+
+const D = await rulebookData();
+const today = new Date().toISOString().slice(0, 10);
+const day = today < D.range.from ? D.range.from : today > D.range.to ? D.range.to : today;
+const span = (iso: string) => (Date.parse(iso) - Date.parse(D.range.from)) / (Date.parse(D.range.to) - Date.parse(D.range.from));
+const first = D.views[0];
+const client = { range: D.range, dates: D.dates, views: D.views.map((v) => ({ id: v.id, rows: v.groups.flatMap((g) => g.rows.map((r) => ({ key: r.key, phases: r.phases }))) })) };
+---
+<div class="rulebook instrument" data-rulebook data-j={first.id}>
+  <header class="bar top">
+    <div class="id">
+      <a class="plain home" href={u('/')} aria-label="Data Explorer: home"><Logo size="20px" /></a>
+      <span class="mono">Rulebook</span>
+      <span class="title">What the law says, stop by stop</span>
+    </div>
+    <p class="readout mono num" data-readout aria-live="polite">{first.name} · {longDate(day)}</p>
+    <a class="icon plain" href={u('/')} aria-label="Leave the rulebook">✕</a>
+  </header>
+
+  <div class="body">
+    <div class="matrix" data-matrix>
+      <p class="caveat"><Disclaimer /></p>
+
+      <div class="row head" role="presentation">
+        <span class="label"></span>
+        {D.columns.map((c) => (
+          <span class:list={['col', c.line && 'line']} title={c.place}>
+            {c.n !== null
+              ? <a class="plain" href={u(`/trace/?hop=${c.n}`)}><b class="num">{c.n}</b> <span class="name">{c.label}</span></a>
+              : <><b class="plus">+</b> <span class="name">{c.label}</span></>}
+          </span>
+        ))}
+      </div>
+
+      {D.views.map((v, vi) => (
+        <div class="view" data-view={v.id} hidden={vi > 0}>
+          {v.pending && (
+            <p class="pending">Amendments to the Data Act are proposed in the Digital Omnibus and are not agreed; it applies as written.
+              <a href={kb('law/wider-rulebook/digital-omnibus')} rel="noopener">What is proposed</a></p>
+          )}
+          {v.groups.map((g) => (
+            <section class="group" aria-label={g.title}>
+              <h2 class="mono">{g.title}</h2>
+              {g.rows.map((r) => {
+                const st = stateOn(r.phases, day);
+                return (
+                  <button type="button" class:list={['row', r.kind, r.status && `status-${r.status}`]} data-row={r.key}
+                          data-state={r.kind === 'absent' ? 'absent' : st.state} aria-controls="rb-drawer">
+                    <span class="label">
+                      <span class="statement">{r.label}</span>
+                      <span class="mono cite">{r.cite}</span>
+                      {r.kind !== 'absent' && <span class="when" data-when>{phaseLine(r.phases, day)}</span>}
+                    </span>
+                    {r.cells.map((on, i) => (
+                      <span class:list={['cell', D.columns[i].line && 'line', on && 'on']} aria-hidden="true"></span>
+                    ))}
+                  </button>
+                );
+              })}
+            </section>
+          ))}
+        </div>
+      ))}
+    </div>
+
+    <aside class="drawer" id="rb-drawer" data-drawer aria-label="Detail">
+      <button class="close icon" type="button" data-close aria-label="Close">✕</button>
+      {D.views.map((v) => v.groups.flatMap((g) => g.rows).map((r, i) => (
+        <article class="detail" data-detail={`${v.id}:${r.key}`} hidden={!(v.id === first.id && i === 0)}>
+          <p class="mono">{r.detail.eyebrow}</p>
+          <h2>{r.detail.title}</h2>
+          {r.detail.lead && <p class="lead">{r.detail.lead}</p>}
+          {r.detail.context && <p class="context">{r.detail.context}</p>}
+          {r.detail.paragraphs.map((p) => <p>{p}</p>)}
+          {r.detail.ask && <div class="ask"><p class="mono">The ask</p><p>{r.detail.ask}</p></div>}
+          {r.phases.length > 0 && (
+            <div class="dates"><p class="mono">When</p>
+              <ul>{r.phases.map((p) => <li><span class="num">{longDate(p.date)}</span> · {p.what}</li>)}</ul>
+            </div>
+          )}
+          {r.detail.articles && (
+            <div class="arts"><p class="mono">The law behind it</p>
+              {r.detail.articles.map((a) => (
+                <details>
+                  <summary><b class="num">Article {a.n}</b> {a.title}</summary>
+                  <p class="reg mono">Precise reading · a summary, not the statute</p>
+                  <p>{a.precise}</p>
+                  <p class="reg mono">Plain reading · paraphrase</p>
+                  <p>{a.plain}</p>
+                </details>
+              ))}
+            </div>
+          )}
+          {r.detail.stops.length > 0 && (
+            <div class="stops"><p class="mono">On the trace</p>
+              <p>{r.detail.stops.map((n) => <a class="chip plain" href={u(`/trace/?hop=${n}`)}><b class="num">{n}</b> {D.columns[n].label}</a>)}</p>
+            </div>
+          )}
+          {r.detail.links.length > 0 && (
+            <p class="links">{r.detail.links.map((l, k) => <>{k > 0 && ' · '}<a href={l.href} rel="noopener">{l.label}</a></>)}</p>
+          )}
+        </article>
+      )))}
+      <footer class="foot"><Disclaimer full /></footer>
+    </aside>
+  </div>
+
+  <div class="bar controls">
+    <div class="time">
+      <label class="mono" for="rb-date">Date</label>
+      <div class="track">
+        <input id="rb-date" type="range" min="0" max="1" step="any" value={span(day)} data-date
+               aria-valuetext={longDate(day)} />
+        {D.dates.filter((d) => d >= D.range.from && d <= D.range.to).map((d) => (
+          <span class="tick" style={`left:${(span(d) * 100).toFixed(3)}%`} title={longDate(d)} data-tick={d}></span>
+        ))}
+      </div>
+      <button type="button" class="today" data-today>Today</button>
+    </div>
+    <div class="switch" role="radiogroup" aria-label="Jurisdiction">
+      {D.views.map((v, i) => <button type="button" role="radio" aria-checked={i === 0 ? 'true' : 'false'} data-set-j={v.id}>{v.id.toUpperCase()}</button>)}
+    </div>
+    <a class="ui link plain" href={u('/trace/')}>The trace</a>
+  </div>
+
+  <script type="application/json" id="rulebook-data" set:html={JSON.stringify(client)} />
+</div>
+
+<noscript>
+  <style>
+    body.bare { overflow: auto !important; }
+    .rulebook { position: static !important; height: auto !important; }
+    .rulebook .body { display: block !important; }
+    .rulebook .drawer { position: static !important; transform: none !important; border: 0 !important; max-height: none !important; }
+    .rulebook .detail { display: block !important; border-top: 1px solid var(--ks-instrument-rule); padding-top: 18px; margin-top: 18px; }
+    .rulebook .view[data-view]:not([data-view='eu']) { display: none; }
+    .rulebook .bar.controls, .rulebook .close { display: none !important; }
+  </style>
+</noscript>
+
+<script>
+  import '../scripts/rulebook.ts';
+</script>
+
+<style>
+  .rulebook {
+    position: fixed; inset: 0; display: grid; grid-template-rows: auto 1fr auto;
+    /* minmax(0, …): a long unbreakable readout must not widen the page. */
+    grid-template-columns: minmax(0, 1fr);
+    background: var(--ks-instrument-deep); color: var(--ks-instrument-text);
+    --label: minmax(220px, 300px);
+  }
+  .mono { font-family: var(--ks-mono), monospace; font-size: var(--ks-type-mono-size); letter-spacing: .12em; text-transform: uppercase; color: var(--ks-instrument-muted); margin: 0; }
+  p { margin: 0; }
+  .num { font-variant-numeric: var(--f1-numeric); }
+
+  /* ── Bars, as the trace's ── */
+  .bar { display: flex; align-items: center; gap: 16px; padding: 12px clamp(14px, 3vw, 28px); background: var(--ks-instrument-deep); }
+  .top { border-bottom: 1px solid var(--ks-instrument-rule); }
+  .controls { border-top: 1px solid var(--ks-instrument-rule); }
+  .id { display: flex; align-items: center; gap: 12px; min-width: 0; flex: none; max-width: 60%; }
+  .id .title { font-weight: 600; font-size: var(--ks-type-title-size); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .readout { margin-left: auto; min-width: 0; letter-spacing: .06em; text-transform: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .icon {
+    display: inline-grid; place-items: center; min-width: var(--ks-control-md); height: var(--ks-control-md);
+    background: transparent; color: var(--ks-instrument-text); font: inherit;
+    border: 1px solid var(--ks-instrument-rule); border-radius: var(--ks-radius-sm); cursor: pointer;
+  }
+  .icon:hover { border-color: var(--ks-instrument-muted); background: var(--ks-instrument); }
+  .time { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+  .track { position: relative; flex: 1; height: 28px; display: flex; align-items: center; }
+  .track input { width: 100%; margin: 0; accent-color: var(--dse-event); cursor: pointer; }
+  .track input:focus-visible { outline: 2px solid var(--ks-patina); outline-offset: 2px; }
+  .tick { position: absolute; top: 2px; width: 1px; height: 7px; background: var(--ks-instrument-muted); pointer-events: none; }
+  .today, .switch button {
+    font: inherit; font-size: var(--ks-type-ui-size); color: var(--ks-instrument-muted); background: transparent; cursor: pointer;
+    border: 1px solid var(--ks-instrument-rule); border-radius: var(--ks-radius-pill); padding: 5px 12px; white-space: nowrap;
+  }
+  .today:hover { color: var(--ks-instrument-text); }
+  .switch { display: inline-flex; border: 1px solid var(--ks-instrument-rule); border-radius: var(--ks-radius-pill); padding: 2px; }
+  .switch button { border: 0; padding: 5px 10px; font-family: var(--ks-mono), monospace; letter-spacing: .08em; }
+  .switch button[aria-checked='true'] { background: var(--ks-instrument-raised); color: var(--ks-instrument-text); }
+  .switch button:focus-visible, .today:focus-visible { outline: 2px solid var(--ks-patina); outline-offset: 1px; }
+  .link { color: var(--ks-instrument-muted); letter-spacing: .08em; text-transform: uppercase; font-size: var(--ks-type-label-size); white-space: nowrap; }
+  .link:hover { color: var(--ks-instrument-text); }
+
+  /* ── The table ── */
+  .body { display: grid; grid-template-columns: minmax(0, 1fr) 400px; min-height: 0; }
+  .matrix { overflow: auto; padding: 14px clamp(14px, 3vw, 28px) 32px; }
+  .caveat { margin-bottom: 10px; }
+  .pending { font-size: var(--ks-type-small-size); color: var(--ks-instrument-muted); margin: 6px 0 4px; }
+  .pending a { color: var(--ks-instrument-text); }
+  .row {
+    display: grid; grid-template-columns: var(--label) repeat(7, minmax(44px, 1fr)); align-items: stretch;
+    width: 100%; text-align: left; font: inherit; color: inherit; background: transparent; border: 0; padding: 0;
+    border-bottom: 1px solid var(--ks-instrument-rule); cursor: pointer;
+  }
+  .row.head { position: sticky; top: -14px; z-index: 1; background: var(--ks-instrument-deep); cursor: default; padding-top: 6px; }
+  .row.head .col { padding: 6px 6px 8px; font-size: var(--ks-type-label-size); color: var(--ks-instrument-muted); line-height: 1.25; }
+  .row.head .col a { color: inherit; }
+  .row.head .col a:hover { color: var(--ks-instrument-text); }
+  .row.head .plus { margin-right: 2px; }
+  .row.head b { font-family: var(--ks-mono), monospace; color: var(--dse-event); font-weight: 500; }
+  /* The property line, between the comms room and the cloud. */
+  .col.line, .cell.line { border-left: 2px dashed var(--dse-line); }
+  .row:not(.head):hover { background: var(--ks-instrument); }
+  .row:focus-visible { outline: 2px solid var(--ks-patina); outline-offset: -2px; }
+  .row[aria-current='true'] { background: var(--ks-instrument); box-shadow: inset 3px 0 0 var(--dse-event); }
+  .label { display: grid; gap: 2px; padding: 10px 14px 10px 6px; }
+  .statement { line-height: 1.35; }
+  .cite { letter-spacing: .06em; text-transform: none; color: var(--dse-event); }
+  .when { font-size: var(--ks-type-label-size); color: var(--ks-instrument-muted); line-height: 1.35; }
+  .cell { position: relative; }
+  .cell.on::after { content: ''; position: absolute; left: 4px; right: 4px; top: 50%; height: 14px; margin-top: -7px; border-radius: 3px; }
+  /* In force, partly in force, not yet: filled, half, outlined. */
+  .row[data-state='full'] .cell.on::after { background: var(--dse-event); }
+  .row[data-state='partial'] .cell.on::after { background: linear-gradient(90deg, var(--dse-event) 50%, transparent 50%); box-shadow: inset 0 0 0 1px var(--dse-event); }
+  .row[data-state='future'] .cell.on::after { box-shadow: inset 0 0 0 1px var(--dse-event); }
+  .row.ask[data-state='full'] .cell.on::after { background: var(--ks-kinpaku-deep); }
+  .row.ask[data-state='partial'] .cell.on::after { background: linear-gradient(90deg, var(--ks-kinpaku-deep) 50%, transparent 50%); box-shadow: inset 0 0 0 1px var(--ks-kinpaku-deep); }
+  .row.ask[data-state='future'] .cell.on::after { box-shadow: inset 0 0 0 1px var(--ks-kinpaku-deep); }
+  /* Nothing here: the row stays, hatched, and its label says so in words. */
+  .row.absent { grid-template-columns: var(--label) 1fr; }
+  .row.absent .cell { display: none; }
+  .row.absent::after {
+    content: ''; margin: 8px 4px; border-radius: 3px;
+    background: repeating-linear-gradient(-45deg, var(--ks-instrument-rule) 0 1px, transparent 1px 7px);
+  }
+  .row.absent .statement { color: var(--ks-instrument-text); }
+  .row.absent .cite { color: var(--ks-instrument-muted); }
+  .row.status-sector::after, .row.status-powers-only::after {
+    background: repeating-linear-gradient(-45deg, color-mix(in oklch, var(--dse-event) 45%, transparent) 0 1px, transparent 1px 7px);
+  }
+  .group { margin-top: 18px; }
+  .group h2 { margin: 0 0 4px 6px; }
+
+  /* ── The drawer ── */
+  .drawer { position: relative; border-left: 1px solid var(--ks-instrument-rule); overflow: auto; padding: 18px 22px 22px; }
+  .close { position: absolute; top: 12px; right: 12px; display: none; }
+  .detail { display: grid; gap: 12px; }
+  .detail[hidden] { display: none; }
+  .detail h2 { font-family: var(--ks-font-display), sans-serif; font-weight: 300; font-size: 2rem; line-height: 1.05; margin: 0; }
+  .detail .lead { font-size: var(--ks-type-lead-size); line-height: 1.5; }
+  .detail p { line-height: 1.55; }
+  .context { color: var(--ks-instrument-muted); }
+  .ask { border-left: 2px solid var(--dse-event); padding-left: 12px; display: grid; gap: 4px; }
+  .dates ul { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 4px; font-size: var(--ks-type-small-size); }
+  .arts { display: grid; gap: 6px; }
+  details { border-top: 1px solid var(--ks-instrument-rule); padding-top: 6px; }
+  summary { cursor: pointer; line-height: 1.4; }
+  summary b { color: var(--dse-event); font-weight: 500; margin-right: 4px; }
+  details p { margin-top: 6px; font-size: var(--ks-type-small-size); }
+  .reg { margin-top: 10px !important; text-transform: none; letter-spacing: .04em; }
+  .chip { display: inline-block; margin: 4px 6px 0 0; padding: 3px 10px; border: 1px solid var(--ks-instrument-rule); border-radius: var(--ks-radius-pill); color: var(--ks-instrument-text); font-size: var(--ks-type-small-size); }
+  .chip b { font-family: var(--ks-mono), monospace; color: var(--dse-event); font-weight: 500; }
+  .chip:hover { border-color: var(--ks-instrument-muted); }
+  .links { font-size: var(--ks-type-small-size); color: var(--ks-instrument-muted); }
+  .links a { color: var(--ks-instrument-text); }
+  .foot { margin-top: 24px; border-top: 1px solid var(--ks-instrument-rule); padding-top: 12px; }
+
+  /* ── Phone: label above its strip; the drawer as a bottom sheet ── */
+  @media (max-width: 760px) {
+    .body { grid-template-columns: 1fr; }
+    .rulebook { --label: 1fr; }
+    .row { grid-template-columns: repeat(7, 1fr); }
+    .row .label { grid-column: 1 / -1; padding-bottom: 4px; }
+    .row .cell { height: 26px; }
+    .row.head .label { display: none; }
+    .row.head .col .name { display: none; }
+    .row.head .col { text-align: center; }
+    .row.absent { grid-template-columns: 1fr; }
+    .row.absent::after { height: 12px; margin-top: 0; }
+    .drawer {
+      position: fixed; left: 0; right: 0; bottom: 0; max-height: 72dvh; z-index: 5; border-left: 0;
+      border-top: 1px solid var(--ks-instrument-rule); background: var(--ks-instrument);
+      transform: translateY(105%); transition: transform var(--ks-settle) var(--ks-ease);
+      box-shadow: 0 -16px 40px oklch(0% 0 0 / .4);
+    }
+    .drawer.open { transform: none; }
+    .close { display: inline-grid; }
+    .id .title { display: none; }
+    .controls { flex-wrap: wrap; gap: 10px 12px; padding-inline: 16px; }
+    .time { flex-basis: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) { .drawer { transition: none; } }
+</style>

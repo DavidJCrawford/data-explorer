@@ -6,6 +6,8 @@ tags: [jurisdiction, eu]
 jurisdiction: eu
 device_data_right: general
 legal_review: none
+# The rulebook draws the EU from the rights and instruments themselves.
+rulebook: { source: collections }
 generated: { by: claude-code/opus-5.5, at: "2026-10-09T00:00:00Z" }
 status: draft
 sources:

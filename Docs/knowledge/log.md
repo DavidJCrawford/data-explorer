@@ -1,6 +1,8 @@
 # Directory Update Log
 
 ## 2026-10-09
+* **Checked**: the four non-EU [jurisdictions](law/jurisdictions/index.md) against primary and official sources (SPEC §3.2.3) and rewritten. UK: smart data powers commenced 20 August 2025 (SI 2025/904); product security regime since 29 April 2024. New Zealand: banking designated 1 December 2025, electricity decided but not final (the first draft's 1 July 2027 was a planning date and is removed); IPP 3A in force since 1 May 2026. Australia: automated-decision transparency from 10 December 2026. United States: the CCPA has covered employee and business data since 1 January 2023.
+* **Added**: `phases` on every right and instrument, and a `rulebook` block on each jurisdiction, for the rulebook's time axis and jurisdiction switch.
 * **Checked**: [the trace](building/the-trace.md)'s attachments against the Official Journal text, as the author's own reading (SPEC §3.2.1); David confirmed the counts (§3.2.2). The trace's model gained what the event becomes at each hop and the footage's state while still on site.
 * **Corrected**: [Share it](rights/share.md) now applies at the [third party](building/components/third-party.md). The trace's table already said it did; a new build check comparing that table with the rights found the gap.
 * **Added**: [the trace](building/the-trace.md) now carries its model in frontmatter (`parties`, `hops`, `sensitive`). The site's ledger is computed from it, and the build recomputes every running total and compares it with the tables in the body.

@@ -8,6 +8,10 @@ kind: directive
 cite: "Directive (EU) 2022/2555"
 attaches_to: ["cloud", "controller", "head-end"]
 legal_review: none
+# Dated phases, for the rulebook's time axis. verify checks them against
+# the Dates table below.
+phases:
+  - { date: 2024-10-17, what: "member-state transposition deadline" }
 stale_after: "2027-04-01T00:00:00Z"
 generated: { by: claude-code/opus-5.5, at: "2026-10-09T00:00:00Z" }
 status: draft

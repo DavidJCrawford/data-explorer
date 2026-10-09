@@ -8,6 +8,10 @@ kind: regulation
 cite: "Regulation (EU) 2016/679"
 attaches_to: ["cloud", "cloud-ai", "door", "head-end", "occupancy"]
 legal_review: none
+# Dated phases, for the rulebook's time axis. verify checks them against
+# the Dates table below.
+phases:
+  - { date: 2018-05-25, what: "applies" }
 stale_after: "2027-04-01T00:00:00Z"
 generated: { by: claude-code/opus-5.5, at: "2026-10-09T00:00:00Z" }
 status: draft

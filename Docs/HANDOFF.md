@@ -1,6 +1,6 @@
 # HANDOFF — Data Explorer
 
-Written 2026-10-09 at the end of phase 1; updated after phases 2, 3 and 4. Read [SPEC.md](SPEC.md) first; its §10
+Written 2026-10-09 at the end of phase 1; updated after phases 2 to 5. Read [SPEC.md](SPEC.md) first; its §10
 is the tracker. The content is the knowledge base in [knowledge/](knowledge/index.md).
 
 ## 0. Where this is up to
@@ -9,7 +9,7 @@ is the tracker. The content is the knowledge base in [knowledge/](knowledge/inde
 https://davidjcrawford.github.io/data-explorer/ from
 `DavidJCrawford/data-explorer`. Pushing `main` deploys. The site builds from
 the knowledge base with every check in SPEC §5 running, and the one page is
-the landing page and the trace at `/trace/`. The section drawing on its own
+the landing page, the trace at `/trace/` and the rulebook at `/rulebook/`. The section drawing on its own
 is reviewed with `make drafts` at `/draft/section/`.
 
 ```bash
@@ -110,13 +110,33 @@ scripts/check_site.py        every internal link, unchanged from the siblings
   the event becomes) and what is owed at each stop, against the rights'
   `attaches_to`. The second found "Share it" missing from the third party.
 
+- **The rulebook is a table, not a graph** (`components/Rulebook.astro`,
+  `lib/rulebook-data.ts`, `scripts/rulebook.ts`). Every jurisdiction's rows and
+  every row's drawer are rendered at build time; the script switches
+  jurisdiction, moves the date and selects. State is in the URL:
+  `?j=uk&at=2027-01-12&sel=leave`.
+- **Where an instrument applies comes from the components' `asks`**, not from
+  the instrument. One source; the trace's cards use the same field.
+- **Rows are drawn from structured frontmatter**: `phases` on rights and
+  instruments (verify checks rights' phases fall on the Act's milestones and
+  instruments' match their Dates tables), and a `rulebook` block on each
+  non-EU jurisdiction with a note for every EU right and its own asks
+  (verify checks all seven rights are covered and every ask points at an
+  instrument).
+- **`lib/phases.ts` is shared** by the build's first paint and the scrubber,
+  so the two cannot disagree about what is in force on a day.
+- **A long unbreakable line in a bar widened the whole page on a phone.** Both
+  instruments now set `grid-template-columns: minmax(0, 1fr)` and let the
+  readout truncate.
+
 ## 3. Next
 
-Phase 5, the rulebook (SPEC §4.3). The jurisdictions need checking against
-their primary legislation first (SPEC §3.2.3). When `/rulebook/` exists, the
-trace's finale button turns itself on. Still owed from phase 4: reduced
-motion, a hidden tab and a real phone checked by hand, and the "building lies
-down" transition.
+Phase 6, reference pages and agent surfaces (SPEC §4.4, §4.5): an article page
+per article, a right page per right, the sources page, and llms.txt, the
+index.md twin and the raw bundle. When the bundle is published with the site,
+change `kb()` in `lib/scope.ts` to point at it. Still owed from phase 4:
+reduced motion, a hidden tab and a real phone checked by hand, and the
+"building lies down" transition.
 
 The siblings' HANDOFF lessons apply throughout; SPEC §7 lists the ones that
 bite this project.

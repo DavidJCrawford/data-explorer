@@ -9,6 +9,11 @@ applies_from: 2025-09-12
 attaches_to: ["cloud", "cloud-ai"]
 pairs_with: []
 legal_review: none
+# Dated phases, for the rulebook's time axis. Every date is one of the
+# Act's milestones; verify checks it.
+phases:
+  - { date: 2025-09-12, what: "Switching protected; only cost-based charges" }
+  - { date: 2027-01-12, what: "Switching charges end" }
 generated: { by: claude-code/opus-5.5, at: "2026-10-09T00:00:00Z" }
 status: draft
 sources:

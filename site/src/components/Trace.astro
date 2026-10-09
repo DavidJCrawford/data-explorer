@@ -215,6 +215,7 @@ const pct = (s: number) => `${(100 * s / total).toFixed(3)}%`;
 <style>
   .trace {
     position: fixed; inset: 0; display: grid; grid-template-rows: auto 1fr auto;
+    grid-template-columns: minmax(0, 1fr);
     background: var(--ks-instrument-deep); color: var(--ks-instrument-text);
   }
   /* One archetype at a time. */
@@ -228,9 +229,9 @@ const pct = (s: number) => `${(100 * s / total).toFixed(3)}%`;
   .bar { display: flex; align-items: center; gap: 16px; padding: 12px clamp(14px, 3vw, 28px); background: var(--ks-instrument-deep); }
   .top { border-bottom: 1px solid var(--ks-instrument-rule); }
   .controls { border-top: 1px solid var(--ks-instrument-rule); }
-  .id { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .id { display: flex; align-items: center; gap: 12px; min-width: 0; flex: none; max-width: 60%; }
   .id .title { font-weight: 600; font-size: var(--ks-type-title-size); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .readout { margin-left: auto; letter-spacing: .06em; text-transform: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .readout { margin-left: auto; min-width: 0; letter-spacing: .06em; text-transform: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .icon {
     display: inline-grid; place-items: center; min-width: var(--ks-control-md); height: var(--ks-control-md);
     background: transparent; color: var(--ks-instrument-text); font: inherit;

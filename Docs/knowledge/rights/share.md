@@ -9,6 +9,10 @@ applies_from: 2025-09-12
 attaches_to: ["cloud", "third-party", "web-client"]
 pairs_with: ["gdpr"]
 legal_review: none
+# Dated phases, for the rulebook's time axis. Every date is one of the
+# Act's milestones; verify checks it.
+phases:
+  - { date: 2025-09-12, what: "Applies" }
 generated: { by: claude-code/opus-5.5, at: "2026-10-09T00:00:00Z" }
 status: draft
 sources:

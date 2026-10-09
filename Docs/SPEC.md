@@ -4,9 +4,9 @@
 cloud and shows, at each step, who holds the data and what the building's
 owner is owed.**
 
-- **Status:** phases 1 to 4 built and deployed 2026-10-09: the scaffold,
+- **Status:** phases 1 to 5 built and deployed 2026-10-09: the scaffold,
   with every check in §5 running, the landing page, the section drawing,
-  and the trace at `/trace/`. §10 is the
+  the trace at `/trace/` and the rulebook at `/rulebook/`. §10 is the
   tracker; [HANDOFF.md](HANDOFF.md) is where it is up to.
 - **Content source:** [Docs/knowledge/](knowledge/index.md), an OKF v0.2
   bundle compiled from the prototype
@@ -432,11 +432,13 @@ Update this list as work lands; log detail in [knowledge/log.md](knowledge/log.m
 - [ ] Reduced motion, a hidden tab, and a real phone checked by hand (not yet exercised)
 
 **Phase 5: the rulebook** (jurisdictions need §3.2.3)
-- [ ] Hops as columns, rights and instruments as bands
-- [ ] Time scrubber and milestones
-- [ ] Drawer with two registers and ELI links
-- [ ] Jurisdiction switch with honest absence
-- [ ] Phone transposition
+- [x] §3.2.3 jurisdictions checked against primary and official sources (UK, NZ, AU, US)
+- [x] Hops as columns, rights and instruments as bands (plus an "alongside" column)
+- [x] Time scrubber and milestones (every date anything comes into force is a tick; arrow keys step between them)
+- [x] Drawer with two registers and ELI links
+- [x] Jurisdiction switch with honest absence
+- [x] Phone layout: each row's label above a strip of seven cells; the drawer as a bottom sheet (not a full transposition: seven cells fit at 375 px)
+- [x] Trace cards link each right to it; the trace's finale links here
 
 **Phase 6: reference and agents**
 - [ ] Article and right pages; the Act index

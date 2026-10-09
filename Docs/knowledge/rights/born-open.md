@@ -9,6 +9,10 @@ applies_from: 2026-09-12
 attaches_to: ["air", "controller", "door", "meter", "occupancy"]
 pairs_with: ["cra"]
 legal_review: none
+# Dated phases, for the rulebook's time axis. Every date is one of the
+# Act's milestones; verify checks it.
+phases:
+  - { date: 2026-09-12, what: "Applies to products placed on the market from this date" }
 generated: { by: claude-code/opus-5.5, at: "2026-10-09T00:00:00Z" }
 status: draft
 sources:

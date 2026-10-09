@@ -1,0 +1,11 @@
+---
+/** The rulebook (SPEC §4.3). A full-screen instrument like the trace, so the
+ *  page frame's chrome is off; components/Rulebook.astro carries its own bars
+ *  and the disclaimer. */
+import Base from '@layouts/Base.astro';
+import Rulebook from '@components/Rulebook.astro';
+---
+<Base title="The rulebook" chrome={false}
+      description="The law laid along the path a building's data takes: what the owner is owed at each stop, what to ask, and how it changes with the date and the country.">
+  <Rulebook />
+</Base>

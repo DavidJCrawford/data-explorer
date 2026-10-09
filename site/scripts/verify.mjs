@@ -153,13 +153,58 @@ function verifyBundle() {
 
   verifyTrace(concepts.get('building/the-trace'), components, rights);
   verifyMilestones(concepts.get('law/eu-data-act/milestones'), articles);
+  verifyPhases(concepts.get('law/eu-data-act/milestones'), rights, instruments);
+  verifyJurisdictions(byPrefix('law/jurisdictions/').map(([, c]) => c), rights, instruments);
+}
+
+const iso = (d) => new Date(d).toISOString().slice(0, 10);
+
+/** The rulebook's time axis: rights' phases fall on the Act's milestones, and
+ *  instruments' phases match the Dates table a reader sees. */
+function verifyPhases(m, rights, instruments) {
+  const milestoneDates = new Set((m?.data.milestones ?? []).map((x) => iso(x.date)));
+  for (const r of rights) {
+    const ph = r.data.phases ?? [];
+    if (!ph.length) fail(r.rel, 'no phases');
+    else if (iso(ph[0].date) !== iso(r.data.applies_from)) fail(r.rel, `first phase ${iso(ph[0].date)} is not applies_from ${iso(r.data.applies_from)}`);
+    for (const p of ph) if (!milestoneDates.has(iso(p.date))) fail(r.rel, `phase ${iso(p.date)} is not one of the Act's milestones`);
+  }
+  for (const [id, c] of instruments) {
+    if (c.data.type !== 'Instrument') continue;
+    const ph = (c.data.phases ?? []).map((p) => `${iso(p.date)} ${p.what}`);
+    const table = [...(c.body.split('# Dates')[1] ?? '').matchAll(/^\| (\d{4}-\d{2}-\d{2}) \| ([^|]+?) \|/gm)].map((r) => `${r[1]} ${r[2]}`);
+    if (ph.join('|') !== table.join('|')) fail(c.rel, `phases [${ph.join('; ')}] disagree with the Dates table [${table.join('; ')}]`);
+  }
+}
+
+/** Each jurisdiction says what applies instead of every EU right, and its
+ *  asks point at instruments that exist. */
+function verifyJurisdictions(js, rights, instruments) {
+  const rightIds = rights.map((r) => r.rel.replace(/^rights\/|\.md$/g, '')).sort();
+  for (const j of js) {
+    const rb = j.data.rulebook;
+    if (!rb) { fail(j.rel, 'no rulebook block'); continue; }
+    if (rb.source === 'collections') continue;
+    const keys = Object.keys(rb.rights ?? {}).sort();
+    if (keys.join() !== rightIds.join()) fail(j.rel, `rulebook.rights covers [${keys}], expected [${rightIds}]`);
+    for (const [k, v] of Object.entries(rb.rights ?? {})) {
+      if (!['none', 'sector', 'powers-only', 'partial'].includes(v.status)) fail(j.rel, `right ${k}: status “${v.status}”`);
+      if (!v.note) fail(j.rel, `right ${k}: no note; an absence is said in words`);
+    }
+    for (const a of rb.asks ?? []) {
+      const ref = a.instrument ?? a.placed_like;
+      if (!ref || !instruments.has(ref)) fail(j.rel, `ask ${a.id ?? a.instrument} refers to “${ref}”, which is not an instrument`);
+      if (!a.instrument && !(a.name && a.question && a.ask && a.url && a.phases?.length)) fail(j.rel, `ask ${a.id} lacks name, question, ask, url or phases`);
+      const ds = (a.phases ?? []).map((p) => iso(p.date));
+      if (ds.some((d, i) => i > 0 && d < ds[i - 1])) fail(j.rel, `ask ${a.id} phases are not in date order`);
+    }
+  }
 }
 
 /** The milestones the site computes with, against the table a reader sees. */
 function verifyMilestones(m, articles) {
   if (!m) return fail('law/eu-data-act/milestones.md', 'missing');
   const list = m.data.milestones ?? [];
-  const iso = (d) => new Date(d).toISOString().slice(0, 10);
   const rows = [...m.body.matchAll(/^\| (\d{4}-\d{2}-\d{2}) \| ([^|]+?) \|/gm)].map((r) => [r[1], r[2]]);
   if (rows.length !== list.length) fail(m.rel, `the table has ${rows.length} rows for ${list.length} milestones`);
   list.forEach((x, i) => {

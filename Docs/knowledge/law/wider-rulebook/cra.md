@@ -8,6 +8,11 @@ kind: regulation
 cite: "Regulation (EU) 2024/2847"
 attaches_to: ["air", "controller", "door", "meter", "occupancy"]
 legal_review: none
+# Dated phases, for the rulebook's time axis. verify checks them against
+# the Dates table below.
+phases:
+  - { date: 2026-09-11, what: "exploited-vulnerability reporting" }
+  - { date: 2027-12-11, what: "full obligations apply" }
 stale_after: "2027-04-01T00:00:00Z"
 generated: { by: claude-code/opus-5.5, at: "2026-10-09T00:00:00Z" }
 status: draft

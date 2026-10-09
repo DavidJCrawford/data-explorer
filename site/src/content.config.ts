@@ -34,6 +34,8 @@ const concept = z.object({
 }).loose();
 
 const ids = z.array(z.string());
+/** A dated step in an instrument or right coming into force. */
+const phases = z.array(z.object({ date: z.coerce.date(), what: z.string() }));
 
 export const collections = {
   /** Every concept in the bundle, loosely typed: for the raw publication, the
@@ -66,6 +68,7 @@ export const collections = {
       applies_from: z.coerce.date(),
       attaches_to: ids,
       pairs_with: ids,
+      phases,
       legal_review: z.enum(['none', 'reviewed']),
     }),
   }),
@@ -90,6 +93,7 @@ export const collections = {
       kind: z.string(),
       cite: z.string().optional(),
       attaches_to: ids.optional(),
+      phases: phases.optional(),
       legal_review: z.enum(['none', 'reviewed']),
     }),
   }),
@@ -101,6 +105,22 @@ export const collections = {
       jurisdiction: z.string(),
       device_data_right: z.enum(['general', 'powers-only', 'sector-designations', 'none']),
       legal_review: z.enum(['none', 'reviewed']),
+      /* What the rulebook shows here. The EU is drawn from the rights and
+         instruments themselves; elsewhere each EU right's row says what
+         applies instead, and the asks are the jurisdiction's own. */
+      rulebook: z.union([
+        z.object({ source: z.literal('collections') }),
+        z.object({
+          rights: z.record(z.string(), z.object({ status: z.enum(['none', 'sector', 'powers-only', 'partial']), note: z.string() })),
+          asks: z.array(z.union([
+            z.object({ instrument: z.string() }),
+            z.object({
+              id: z.string(), name: z.string(), cite: z.string(), question: z.string(), ask: z.string(),
+              placed_like: z.string(), phases, url: z.string(),
+            }),
+          ])),
+        }),
+      ]),
     }),
   }),
 
