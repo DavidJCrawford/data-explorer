@@ -1,6 +1,8 @@
 # Directory Update Log
 
 ## 2026-10-09
+* **Checked**: [the trace](building/the-trace.md)'s attachments against the Official Journal text, as the author's own reading (SPEC §3.2.1); David confirmed the counts (§3.2.2). The trace's model gained what the event becomes at each hop and the footage's state while still on site.
+* **Corrected**: [Share it](rights/share.md) now applies at the [third party](building/components/third-party.md). The trace's table already said it did; a new build check comparing that table with the rights found the gap.
 * **Added**: [the trace](building/the-trace.md) now carries its model in frontmatter (`parties`, `hops`, `sensitive`). The site's ledger is computed from it, and the build recomputes every running total and compares it with the tables in the body.
 * **Corrected**: [Article 5](law/eu-data-act/articles/article-05.md) now attaches to the [third party](building/components/third-party.md). The component listed Article 5 and the article did not list the component; the build's two-way reference check found it on its first run.
 * **Decided** (David): the site and its repository are called **Data Explorer** (`data-explorer`). The jurisdiction switch stays, EU default. Cloud AI stays at hop 4 in both archetypes; local AI is the alternative on the governed path's hop 4 card ([the trace](building/the-trace.md)). The camera is the sensitive stream. The old site is left alone for now.
