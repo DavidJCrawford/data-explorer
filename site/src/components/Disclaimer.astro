@@ -1,0 +1,13 @@
+---
+/** The disclaimer as rendered. `full` for article, right and sources pages;
+ *  the short form everywhere else. The marker is what verify looks for. */
+import { DISCLAIMER, DISCLAIMER_SHORT } from '@lib/disclaimer';
+
+interface Props { full?: boolean; class?: string; }
+const { full = false, class: cls } = Astro.props;
+---
+<p class:list={['disclaimer', cls]} data-disclaimer>{full ? DISCLAIMER : DISCLAIMER_SHORT}</p>
+
+<style>
+  .disclaimer { margin: 0; font-size: var(--ks-type-label-size); color: var(--ks-text-faint); max-width: var(--ks-measure); }
+</style>

@@ -1,0 +1,24 @@
+/* This project's own tokens, added beside the inherited palette rather than
+   edited into it (Docs/knowledge/design/palette.md). Starting values: each is
+   to be checked for contrast on the instrument before it carries meaning
+   (3:1 for graphics, 4.5:1 for text). */
+
+:root {
+  /* The door event in motion: the one moving thing, as the boat is on the
+     river. */
+  --dse-event:     var(--ks-kinpaku);
+  /* The customer's own domain: inside the property line, and recipients they
+     chose. */
+  --dse-yours:     var(--ks-patina);
+  /* A seam being crossed. The siblings' data red, which clears 3:1 on the
+     instrument where vermilion does not. */
+  --dse-seam:      var(--f1-corner);
+  /* The property line: a drawn boundary, heavier than other linework. */
+  --dse-line:      oklch(93% 0 0 / 0.45);
+  /* The sensitive stream. Distinct from the event without competing with it.
+     Untested. */
+  --dse-sensitive: oklch(68% 0.09 300);
+  /* The section drawing's linework, in the instrument's greys. */
+  --dse-drawing:       oklch(100% 0 0 / 0.12);
+  --dse-drawing-heavy: oklch(100% 0 0 / 0.24);
+}

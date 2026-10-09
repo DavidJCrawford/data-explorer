@@ -1,0 +1,29 @@
+# ─── Build output ────────────────────────────────────────────────────────────
+dist/
+.astro/
+node_modules/
+*.tsbuildinfo
+
+# ─── Python (scripts/check_site.py) ─────────────────────────────────────────
+__pycache__/
+*.py[cod]
+
+# ─── Local tooling ───────────────────────────────────────────────────────────
+# Editor and harness config. The preview server config in here points at a
+# machine-specific path, and `make preview` is the portable way to look at the
+# built site anyway. Check against the built output, never against `astro dev`.
+.claude/
+
+# ─── Local environment ───────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ─── Editors and OS ──────────────────────────────────────────────────────────
+.DS_Store
+._*
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*~

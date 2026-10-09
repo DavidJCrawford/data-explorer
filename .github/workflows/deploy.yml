@@ -1,0 +1,87 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    # The knowledge base under Docs/knowledge IS the site's content, so unlike
+    # the siblings, Docs/** is not ignored. Only the spec and the readme are.
+    paths-ignore: ['Docs/SPEC.md', 'Docs/HANDOFF.md', 'README.md']
+  workflow_dispatch:
+
+# Nothing is fetched at build time. The content is in the repository.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Configure Pages
+        id: pages
+        uses: actions/configure-pages@v6
+
+      - run: npm ci
+
+      - name: Type check
+        run: npm run check
+
+      # Astro's incremental build cache, keyed on the knowledge base so a
+      # content change invalidates it and nothing else does.
+      - name: Restore incremental build cache
+        uses: actions/cache@v6
+        with:
+          path: site/node_modules/.astro
+          key: astro-${{ hashFiles('Docs/knowledge/**/*.md') }}
+          restore-keys: astro-
+
+      # verify runs inside `npm run build`, before and after Astro. A stale
+      # concept, a broken reference, a ledger that does not add up, a page
+      # without the disclaimer or a vendor's name fails here.
+      - name: Build
+        run: npm run build
+        env:
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}
+
+      - name: Check links
+        run: python3 ../scripts/check_site.py dist
+
+      # The published-site ceiling is 1 GB. Fail early, not at deploy time.
+      - name: Size gate
+        run: |
+          BYTES=$(du -sb dist | cut -f1)
+          echo "dist: $(du -sh dist | cut -f1)"
+          if [ "$BYTES" -gt 734003200 ]; then
+            echo "::error::dist exceeds the 700 MB gate (1 GB is the hard Pages limit)"
+            exit 1
+          fi
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
