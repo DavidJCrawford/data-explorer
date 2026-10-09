@@ -7,7 +7,7 @@
 import { getCollection } from 'astro:content';
 import { trace, rights } from './knowledge';
 import { ledger, steps } from './ledger.mjs';
-import { PLACES, RUNS, PROPERTY, RECORDER, RACK, EXTENT, LANE, Y } from './section';
+import { PLACES, RUNS, PROPERTY, RECORDER, RACK, EXTENT, FOOTAGE_LINE, Y } from './section';
 
 export type Path = 'composite' | 'governed';
 export const PATHS: Path[] = ['composite', 'governed'];
@@ -39,15 +39,17 @@ export async function traceData() {
   const at = [0];
   for (const l of legs) at.push(at[at.length - 1] + l.length);
 
-  /* Where the event crosses the property line: the leg, and how far along it. */
+  /* Where the event crosses the property line (underground, at its far
+     side): the leg, and how far along it. */
   const crossLeg = T.hops.findIndex((h) => h.crosses_property_line);
   const cl = legs[crossLeg - 1];
-  let cross = 0;
+  let cross = -1;
   for (let i = 1, acc = 0; i < cl.points.length; i++) {
     const [a, b] = [cl.points[i - 1], cl.points[i]];
-    if ((a[1] + PROPERTY.z1) * (b[1] + PROPERTY.z1) <= 0 && a[1] !== b[1]) { cross = acc + Math.abs((a[1] + PROPERTY.z1) / (b[1] - a[1])) * dist(a, b); break; }
+    if ((a[0] - PROPERTY.x1) * (b[0] - PROPERTY.x1) <= 0 && a[0] !== b[0]) { cross = acc + Math.abs((PROPERTY.x1 - a[0]) / (b[0] - a[0])) * dist(a, b); break; }
     acc += dist(a, b);
   }
+  if (cross < 0) throw new Error('the event never crosses the property line on the leg that should cross it');
 
   const stops = T.hops.map((h) => ({ n: h.n, x: PLACES[h.component].x, y: Y(PLACES[h.component].z) }));
 
@@ -89,8 +91,8 @@ export async function traceData() {
   const recorder: Pt = [RACK.x, Y(RECORDER.z)];
   const footage = {
     recorder,
-    cloud: [PLACES.cloud.x - 0.45, Y(PLACES.cloud.z) - 0.9] as Pt,
-    crossAt: [LANE.camera, Y(PROPERTY.z1)] as Pt,
+    cloud: [37.4, Y(1.0)] as Pt,
+    crossAt: [FOOTAGE_LINE.x, Y(FOOTAGE_LINE.z)] as Pt,
     onSite: T.sensitive.on_site,
     beyond: { composite: T.sensitive.composite, governed: T.sensitive.governed },
   };

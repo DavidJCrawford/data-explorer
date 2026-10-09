@@ -66,6 +66,9 @@ function init(root: HTMLElement) {
 
   /* ── Pace. Metres of drawing per second; the building is about 28 m deep. ── */
   const V = 4.2;
+  /** Below ground the event runs in a duct for tens of metres with nothing
+   *  to look at, so it goes faster there (SVG y > 0 is below ground). */
+  const V_DUCT = 11;
   const BRAKE_S = 1.3;          // full pace to rest
   const A = V / BRAKE_S;        // so the braking distance is V²/2A
   const CARD_DELAY = 450;
@@ -290,7 +293,9 @@ function init(root: HTMLElement) {
     if (mode === 'travel' && playing) {
       const d = target - s;
       const brake = Math.sqrt(2 * A * Math.max(0, d));
-      v = Math.min(v + A * dt, V, brake);
+      const cruise = position(s).p[1] > 0.2 ? V_DUCT : V;
+      // Slow down on leaving the duct as smoothly as on arriving at a stop.
+      v = Math.min(v + A * dt, Math.max(cruise, v - A * dt), brake);
       s = Math.min(target, s + Math.max(v, 0.05) * dt);
       const { dir } = position(s);
       // Ease the heading so the camera does not snap at each corner.

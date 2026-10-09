@@ -76,8 +76,8 @@ const pct = (s: number) => `${(100 * s / total).toFixed(3)}%`;
           <rect class="footage onsite" x={D.footage.recorder[0] - 0.62} y={D.footage.recorder[1] - 0.1} width={0.2} height={0.2} />
           <rect class="footage beyond only-composite" x={D.footage.cloud[0] - 0.1} y={D.footage.cloud[1] - 0.1} width={0.2} height={0.2} />
           <g class="footage stays only-governed" transform={`translate(${D.footage.crossAt[0]} ${D.footage.crossAt[1]})`}>
-            <line x1={-0.45} y1={0.35} x2={0.45} y2={0.35} />
-            <text x={-0.6} y={0.48} text-anchor="end">Footage stays on site</text>
+            <line x1={0} y1={-0.45} x2={0} y2={0.45} />
+            <text x={-0.3} y={-0.55} text-anchor="end">Footage stays on site</text>
           </g>
           <circle class="event-dot" data-event cx={D.stops[0].x} cy={D.stops[0].y} r={0.18} />
         </g>

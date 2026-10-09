@@ -83,8 +83,12 @@ scripts/check_site.py        every internal link, unchanged from the siblings
 - **The section is in metres.** `lib/section.ts` holds the geometry and
   `components/Section.astro` draws it; the camera will move by changing the
   viewBox, which `Section` takes as a prop. Strokes are non-scaling, type is in
-  metres. `design/the-section-drawing.md` records why the data leaves upward
-  and why the scale break is there.
+  metres. Since the first refinement round it is a street: the office, buried
+  ducts, a data centre, an AI data centre and the third party's office, with
+  breaks in the ground for the kilometres between them
+  (`decisions/underground-and-simpler.md`). The property-line crossing is
+  found where the event's route crosses `PROPERTY.x1` underground; if the
+  route stops crossing it, the build throws.
 - **Drafts never ship.** `/draft/[name]` has no paths unless `DRAFTS=1`. Do not
   create `/trace/` until it works: the landing page's button turns on the
   moment that file exists.

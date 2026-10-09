@@ -157,9 +157,12 @@ by a door event. A full-screen dark instrument.
 **Top bar.** Logo · `TRACE` · the title *Front entrance, 07:42* · the readout
 (`Hop 2 · Head-end · Comms room, level 2`) · ✕ back to the landing page.
 
-**Stage.** The section drawing, full bleed. A gold mark (the event) travels the
-conduits from the reader, up the riser, to the comms room, through the
-property line, up to the cloud, to the model, and out to the third party.
+**Stage.** The section drawing, full bleed: a street-level cut through the
+office, the ground and the buildings the data reaches. A gold mark (the event)
+travels the cables from the reader, up the riser to the comms room, back down
+to the cable entry, under the property line and along buried ducts to a data
+centre, an AI data centre and the third party's office
+([decision](knowledge/decisions/underground-and-simpler.md)).
 Small marks stay behind where copies were made. A red tick crosses the conduit
 at each seam, with the makers' letters either side. The camera frames the event
 set back from centre in its direction of travel. Background streams
@@ -196,10 +199,10 @@ so the first time the switch is used: *Same copies. Different hands.*
 **The sensitive stream.** The camera over the door records the same moment.
 In the composite stack its footage follows the event to the cloud, with its own
 small count. In the governed path it stops at the comms room, and the
-property line flashes once where it would have crossed. This is the visual for
+property line flashes once, underground, where it would have crossed. This is the visual for
 [leave it alone](knowledge/thesis/leave-it-alone.md).
 
-**Finale.** The camera pulls back to the whole section. The ledger shows its
+**Finale.** The camera pulls back to the whole street. The ledger shows its
 totals for both archetypes side by side, and the closing line from the article:
 *Advantage won't go to whoever collects the most. It will go to whoever can
 account for all of it.* One button: "See what the law says" opens the
@@ -211,7 +214,7 @@ navigation with the hop row already in place.
 the same cards and ledger. **No JavaScript.** The stops as a numbered
 document on paper, with the counts in a table.
 
-**Phone.** The section is tall, which suits a phone held upright. The ledger
+**Phone.** The camera's 12 m frame shows a building at a time. The ledger
 becomes a bottom sheet with the count always visible, and cards are full width.
 
 ### 4.3 The rulebook
@@ -447,6 +450,9 @@ Update this list as work lands; log detail in [knowledge/log.md](knowledge/log.m
 - [x] llms.txt, index.md twin, raw bundle with manifest, JSON-LD, robots, sitemap
 - [x] Trace cards and rulebook link each article to its page
 - [x] Search across the reference pages: Pagefind indexes their bodies only; the box is on the Act's index
+
+**Refinement (David's method: iterate on the experience once the base is done)**
+- [x] Round 1, the trace: simpler building; cables underground to physical data centres and the third party's office ([decision](knowledge/decisions/underground-and-simpler.md))
 
 **Phase 7: review and ship**
 - [x] Disclaimer on every legal surface, enforced by `verify` (§3.2.5)

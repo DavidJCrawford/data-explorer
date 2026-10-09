@@ -9,6 +9,7 @@ import { articles, rights, trace, actors, chapters, articleHref } from '@lib/kno
 import { section } from '@lib/rulebook-data';
 import { longDate } from '@lib/phases';
 import { PLACES } from '@lib/section';
+import { getCollection as getAll } from 'astro:content';
 import { u } from '@lib/url';
 import { kb, DATA_ACT_ELI } from '@lib/scope';
 
@@ -22,6 +23,8 @@ const d = a.data;
 const roles = await actors();
 const ch = (await chapters()).find((c) => c.numeral === d.chapter)!;
 const T = await trace();
+/* Components alongside the path are not drawn; name them from the knowledge base. */
+const names = Object.fromEntries((await getAll('components')).map((c) => [c.id, c.data.title]));
 const R = (await rights()).filter((r) => r.data.articles.includes(n));
 const title = d.title.replace(/^Article \d+ — /, '');
 const precise = section(a.body, 'Precise reading');
@@ -54,7 +57,7 @@ const applies = d.applies_from.toISOString().slice(0, 10);
       <tr><th>Applies from</th><td class="num">{longDate(applies)}</td></tr>
       <tr><th>Binds</th><td>{d.binds.length ? d.binds.map((b) => roles[b]).join(', ') : 'No party directly; structural.'}</td></tr>
       <tr><th>Cross-references</th><td>{d.cross_refs.length ? d.cross_refs.map((m, i) => <>{i > 0 && ', '}<a href={u(articleHref(m))}>Article {m}</a></>) : 'None.'}</td></tr>
-      <tr><th>On the trace</th><td>{stops.length ? stops.map((h, i) => <>{i > 0 && ', '}<a href={u(`/trace/?hop=${h.n}`)}>Stop {h.n}, {PLACES[h.component].label}</a></>) : 'Not at any stop.'}{alongside.length > 0 && <>{stops.length ? '; alongside: ' : 'Alongside: '}{alongside.map((c) => PLACES[c]?.label ?? c).join(', ')}</>}</td></tr>
+      <tr><th>On the trace</th><td>{stops.length ? stops.map((h, i) => <>{i > 0 && ', '}<a href={u(`/trace/?hop=${h.n}`)}>Stop {h.n}, {PLACES[h.component].label}</a></>) : 'Not at any stop.'}{alongside.length > 0 && <>{stops.length ? '; alongside: ' : 'Alongside: '}{alongside.map((c) => names[c] ?? c).join(', ')}</>}</td></tr>
       <tr><th>Rights that rest on it</th><td>{R.length ? R.map((r, i) => <>{i > 0 && <br />}<a href={u(`/rights/${r.id}/`)}>{r.data.title}</a></>) : 'None of the seven.'}</td></tr>
     </tbody>
   </table>

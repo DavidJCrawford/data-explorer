@@ -1,21 +1,20 @@
 ---
 /** The section drawing, rendered at build time (Docs/knowledge/design/the-section-drawing.md).
  *
- *  One SVG in metres (lib/section.ts). The trace's camera will move by changing
- *  the viewBox, so `viewBox` is a prop: the whole drawing by default, or any
- *  crop of it. Linework uses non-scaling strokes so a hairline stays a
- *  hairline at every zoom; text is in metres and so scales with the camera,
- *  which is what lets labels read at the trace's working zoom.
+ *  One SVG in metres (lib/section.ts): the office, then the ground between
+ *  sites with the ducts in it, then a cloud data centre, an AI data centre
+ *  and the third party's office. The trace's camera moves by changing the
+ *  viewBox, so `viewBox` is a prop. Linework uses non-scaling strokes so a
+ *  hairline stays a hairline at every zoom; text is in metres and scales with
+ *  the camera, which is what lets labels read at the trace's working zoom.
  *
  *  Nothing here is interactive. Decoration never intercepts the pointer
- *  (SPEC §7): the whole drawing is pointer-events: none, and phase 4 adds
- *  explicit hit targets on top of it.
+ *  (SPEC §7): the whole drawing is pointer-events: none.
  */
-import { getCollection } from 'astro:content';
 import { trace } from '@lib/knowledge';
 import {
-  Y, WIDTH, SLAB, FLOORS, ROOF, PLANT, CORE, RISER, ROOMS, DOOR, PROPERTY, BREAK,
-  PLACES, ALSO, RACK, RECORDER, RUNS, EXTENT, ceiling, assertPlaced,
+  Y, WIDTH, SLAB, FLOORS, ROOF, RISER, ROOMS, DOOR, PROPERTY, SITES, RAISED, BREAKS, DUCT,
+  PLACES, RACK, RECORDER, RUNS, EXTENT, ENTRY, ceiling, assertPlaced, type Site,
 } from '@lib/section';
 
 interface Props {
@@ -30,30 +29,35 @@ interface Props {
 }
 
 const T = await trace();
-const components = (await getCollection('components')).map((c) => c.id);
-assertPlaced([...components, ...T.hops.map((h) => h.component), T.sensitive.component]);
+assertPlaced([
+  ...T.hops.map((h) => h.component),
+  T.sensitive.component,
+  ...T.hops.flatMap((h) => Object.values(h.alternative ?? {})),
+]);
 
 const full: [number, number, number, number] = [EXTENT.x0, Y(EXTENT.z1), EXTENT.x1 - EXTENT.x0, EXTENT.z1 - EXTENT.z0];
-const { viewBox = full, stops = false, route = false, label = 'Section through the building, with the cloud above it', class: cls } = Astro.props;
+const { viewBox = full, stops = false, route = false, label = 'A section through the office, the ground and the buildings its data travels to', class: cls } = Astro.props;
 
 const pts = (p: [number, number][]) => p.map(([x, z]) => `${x},${Y(z)}`).join(' ');
 /** A rectangle from metres: x0..x1 across, z0..z1 up. */
 const box = (x0: number, x1: number, z0: number, z1: number) => ({ x: x0, y: Y(z1), width: x1 - x0, height: z1 - z0 });
 
-/* Partitions: a room's edge that is not a façade or the riser wall. */
-const partitions = ROOMS.flatMap((r) => [r.x0, r.x1]
-  .filter((x) => x > 0 && x < WIDTH && x !== RISER.x1)
-  .map((x) => ({ x, f: FLOORS[r.floor] })));
-
-/* The scale break: an architect's zig-zag across the drawing. */
-const zig = (() => {
-  const z = BREAK.z, a = 0.35, out: [number, number][] = [[PROPERTY.x0 - 1, z]];
-  const mid = (PROPERTY.x0 + PROPERTY.x1) / 2;
-  out.push([mid - 0.6, z], [mid - 0.3, z + a], [mid + 0.3, z - a], [mid + 0.6, z], [PROPERTY.x1 + 1, z]);
+/* A data centre's rack rows: denser and taller where the AI is. */
+const racks = (s: Site) => {
+  const step = s.id === 'cloud-ai' ? 1.1 : 1.6, h = s.id === 'cloud-ai' ? 2.6 : 2.2;
+  const out: { x: number; h: number }[] = [];
+  for (let x = s.x0 + 2.4; x <= s.x1 - 2.4; x += step) out.push({ x, h });
   return out;
-})();
+};
+/* A break in the ground: two zig-zags with the ground cut away between. */
+const zig = (x: number) => {
+  const out: [number, number][] = [];
+  for (let z = 0.5, i = 0; z >= EXTENT.z0; z -= 0.5, i++) out.push([x + (i % 2 ? 0.25 : -0.25), z]);
+  return out;
+};
 
 const stopAt = T.hops.map((h) => ({ n: h.n, ...PLACES[h.component] }));
+const office = FLOORS;
 ---
 <svg class:list={['section', cls]} viewBox={viewBox.join(' ')} role="img" aria-label={label}
      preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
@@ -61,108 +65,89 @@ const stopAt = T.hops.map((h) => ({ n: h.n, ...PLACES[h.component] }));
     <pattern id="earth" width="0.8" height="0.8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
       <line x1="0" y1="0" x2="0" y2="0.8" class="hatch" />
     </pattern>
-    <pattern id="core" width="0.5" height="0.5" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
-      <line x1="0" y1="0" x2="0" y2="0.5" class="hatch" />
-    </pattern>
   </defs>
 
-  <!-- The ground, and the earth under it. -->
-  <rect x={EXTENT.x0} y={0} width={EXTENT.x1 - EXTENT.x0} height={1.6} fill="url(#earth)" class="earth" />
+  <!-- The ground, and the earth the ducts are buried in. -->
+  <rect x={EXTENT.x0} y={0} width={EXTENT.x1 - EXTENT.x0} height={-EXTENT.z0} fill="url(#earth)" class="earth" />
   <line x1={EXTENT.x0} y1={0} x2={EXTENT.x1} y2={0} class="heavy" />
 
-  <!-- Slabs: ground, each upper floor, and the roof. -->
-  <rect {...box(-0.2, WIDTH + 0.2, -SLAB, 0)} class="slab" />
-  {FLOORS.slice(1).map((f) => <rect {...box(0, WIDTH, f.z - SLAB, f.z)} class="slab" />)}
-  <rect {...box(-0.2, WIDTH + 0.2, ROOF - SLAB, ROOF)} class="slab" />
+  <!-- The office: three storeys, the riser, the entrance and the comms room. -->
+  <g class="office">
+    <rect {...box(-0.2, WIDTH + 0.2, -SLAB, 0)} class="slab" />
+    {office.slice(1).map((f) => <rect {...box(0, WIDTH, f.z - SLAB, f.z)} class="slab" />)}
+    <rect {...box(-0.2, WIDTH + 0.2, ROOF - SLAB, ROOF)} class="slab" />
+    <polyline points={pts([[0, DOOR.z1], [0, ROOF + 0.9]])} class="wall" />
+    <line x1={-0.25} y1={Y(DOOR.z1)} x2={0.25} y2={Y(DOOR.z1)} class="wall" />
+    <rect {...box(-0.03, 0.03, DOOR.z0, DOOR.z1 - 0.05)} class="leaf" />
+    <polyline points={pts([[WIDTH, 0], [WIDTH, ROOF + 0.9]])} class="wall" />
+    <rect {...box(RISER.x0, RISER.x1, 0, ROOF)} class="riser" />
+    <line x1={ROOMS[0].x1} y1={Y(0)} x2={ROOMS[0].x1} y2={Y(ceiling(office[0]))} class="partition" />
+    {office.map((f) => <text x={-0.6} y={Y(f.z + 0.35)} class="floor" text-anchor="end">{f.name}</text>)}
+    {ROOMS.map((r) => <text x={r.x0 + 0.3} y={Y(ceiling(office[r.floor]) - 0.45)} class="room">{r.name}</text>)}
+    <text x={RISER.x0 + 0.1} y={Y(ROOF - SLAB - 0.4)} class="room">Riser</text>
+    <text x={ENTRY.x + 0.25} y={Y(ENTRY.z) - 0.25} class="note">Cable entry</text>
+  </g>
 
-  <!-- Façades, the parapet, and the door opening in the entrance façade. -->
-  <polyline points={pts([[0, DOOR.z1], [0, ROOF + 1.0]])} class="wall" />
-  <line x1={-0.25} y1={Y(DOOR.z1)} x2={0.25} y2={Y(DOOR.z1)} class="wall" />
-  <rect {...box(-0.03, 0.03, DOOR.z0, DOOR.z1 - 0.05)} class="leaf" />
-  <polyline points={pts([[WIDTH, 0], [WIDTH, ROOF + 1.0]])} class="wall" />
-
-  <!-- Suspended ceilings, broken by the core. -->
-  {FLOORS.map((f) => (
-    <g class="ceiling">
-      <line x1={0} y1={Y(ceiling(f))} x2={CORE.x0} y2={Y(ceiling(f))} />
-      <line x1={RISER.x1} y1={Y(ceiling(f))} x2={WIDTH} y2={Y(ceiling(f))} />
+  <!-- The other sites. -->
+  {SITES.map((s) => (
+    <g class="site">
+      {s.kind === 'datacentre' ? (
+        <>
+          <rect {...box(s.x0, s.x1, 0, s.h)} class="shell" />
+          <line x1={s.x0} y1={Y(RAISED)} x2={s.x1} y2={Y(RAISED)} class="floor-line" />
+          {racks(s).map((r) => <rect {...box(r.x - 0.3, r.x + 0.3, RAISED, RAISED + r.h)} class="rack" />)}
+          {s.id === 'cloud-ai'
+            ? <polygon points={pts([[s.x1 - 6, s.h], [s.x1 - 5.4, s.h + 2.2], [s.x1 - 3.6, s.h + 2.2], [s.x1 - 3, s.h]])} class="plant" />
+            : [0, 1, 2].map((i) => <rect {...box(s.x0 + 3 + i * 3, s.x0 + 5 + i * 3, s.h, s.h + 1)} class="plant" />)}
+          <text x={s.x0 + 0.4} y={Y(s.h - 0.7)} class="room">{s.id === 'cloud-ai' ? 'AI data centre' : 'Data centre'}</text>
+        </>
+      ) : (
+        <>
+          <rect {...box(s.x0, s.x1, 0, s.h)} class="shell" />
+          <rect {...box(s.x0, s.x1, 4.2 - SLAB, 4.2)} class="slab" />
+          <rect {...box(PLACES['third-party'].x - 0.3, PLACES['third-party'].x + 0.3, 0, 2.0)} class="rack" />
+          <text x={s.x0 + 0.4} y={Y(s.h - 0.7)} class="room">Their office</text>
+        </>
+      )}
     </g>
   ))}
 
-  <!-- The core (lift and stair), hatched, running up into the plant. -->
-  <rect {...box(CORE.x0, CORE.x1, 0, ROOF + 1.4)} fill="url(#core)" class="core" />
-  <!-- The riser: where the building's cables run between floors. -->
-  <rect {...box(RISER.x0, RISER.x1, 0, ROOF)} class="riser" />
+  <!-- Cables: the event's route and the camera's. -->
+  {RUNS.map((r) => <polyline points={pts(r.points)} class:list={['run', r.stream, r.only && `only-${r.only}`, route && r.stream === 'event' && 'lit']} />)}
 
-  <!-- Partitions. -->
-  {partitions.map(({ x, f }) => <line x1={x} y1={Y(f.z)} x2={x} y2={Y(ceiling(f))} class="partition" />)}
-
-  <!-- The plant enclosure on the roof. -->
-  <rect {...box(PLANT.x0, PLANT.x1, ROOF, ROOF + PLANT.h)} class="plant" />
-  {[0.5, 1.0, 1.5, 2.0].map((d) => <line x1={PLANT.x1 - 3} y1={Y(ROOF + d)} x2={PLANT.x1 - 0.4} y2={Y(ROOF + d)} class="louvre" />)}
-
-  <!-- Labels for floors and rooms. -->
-  {FLOORS.map((f) => <text x={-0.6} y={Y(f.z + 0.35)} class="floor" text-anchor="end">{f.name}</text>)}
-  <text x={-0.6} y={Y(ROOF + 0.35)} class="floor" text-anchor="end">Roof</text>
-  {ROOMS.map((r) => <text x={r.x0 + 0.3} y={Y(ceiling(FLOORS[r.floor]) - 0.45)} class="room">{r.name}</text>)}
-  <text x={RISER.x0 + 0.1} y={Y(ROOF - SLAB - 0.4)} class="room">Riser</text>
+  <!-- Breaks in the ground: the sites are kilometres apart, not metres. -->
+  {BREAKS.map((x) => (
+    <g class="break">
+      <rect x={x - 0.45} y={Y(0.5)} width={0.9} height={0.5 - EXTENT.z0} class="gap" />
+      <polyline points={pts(zig(x - 0.45))} />
+      <polyline points={pts(zig(x + 0.45))} />
+      <text x={x + 0.8} y={Y(DUCT.deep - 1.4)} class="note">Kilometres apart</text>
+    </g>
+  ))}
 
   <!-- The property line: the heaviest line in the drawing. -->
   <rect {...box(PROPERTY.x0, PROPERTY.x1, PROPERTY.z0, PROPERTY.z1)} class="property" />
   <text x={PROPERTY.x0 + 0.2} y={Y(PROPERTY.z1) - 0.3} class="property-label">Property line</text>
 
-  <!-- The scale break. Above it, a diagram. -->
-  <polyline points={pts(zig)} class="break" />
-  <text x={PROPERTY.x0 + 0.2} y={Y(BREAK.z + 0.6)} class="note">Beyond this line, not to scale</text>
-
-  <!-- Off site: the data centre, the model provider, the recipient. -->
-  <g class="offsite">
-    <rect {...box(8, 20, 26.6, 30)} />
-    {[9.5, 11, 12.5, 15.5, 17, 18.5].map((x) => <line x1={x} y1={Y(27)} x2={x} y2={Y(29.2)} class="racks" />)}
-    <rect {...box(8, 14, 37.4, 40)} />
-    {[9, 10, 11, 12, 13].map((x) => <line x1={x} y1={Y(37.8)} x2={x} y2={Y(39.6)} class="racks" />)}
-    <rect {...box(26, 30, 34, 36.6)} />
-    <polyline points={pts([[25.6, 36.6], [28, 37.8], [30.4, 36.6]])} />
-  </g>
-
-  <!-- Conduits. The event's route, the camera's, and the rest of the building. -->
-  {RUNS.map((r) => <polyline points={pts(r.points)} class:list={['run', r.stream, r.only && `only-${r.only}`, route && r.stream === 'event' && 'lit']} />)}
-
   <!-- Components. -->
   <g class="kit">
-    <!-- Reader beside the door. -->
     <rect {...box(0.03, 0.17, 1.1, 1.32)} />
-    <!-- Camera on a bracket under the ground-floor ceiling. -->
-    <polyline points={pts([[1.0, ceiling(FLOORS[0])], [1.0, 3.5], [1.45, 3.4]])} class="thin" />
+    <polyline points={pts([[1.0, ceiling(office[0])], [1.0, 3.5], [1.45, 3.4]])} class="thin" />
     <polygon points={pts([[1.0, 3.55], [1.55, 3.48], [1.55, 3.3], [1.0, 3.38]])} class="sensitive-kit" />
-    <!-- Controller enclosure in the riser. -->
-    <rect {...box(17.45, 18.15, 1.25, 1.95)} />
-    <!-- Main switchboard, with the meter. -->
-    <rect {...box(19.8, 21.1, 0, 2.1)} />
-    <circle cx={20.4} cy={Y(1.5)} r={0.16} />
-    <!-- FM office desk and screen. -->
-    <line x1={3.2} y1={Y(FLOORS[1].z + 0.75)} x2={5.4} y2={Y(FLOORS[1].z + 0.75)} />
-    <line x1={3.3} y1={Y(FLOORS[1].z + 0.75)} x2={3.3} y2={Y(FLOORS[1].z)} class="thin" />
-    <line x1={5.3} y1={Y(FLOORS[1].z + 0.75)} x2={5.3} y2={Y(FLOORS[1].z)} class="thin" />
-    <rect {...box(3.95, 4.5, 5.35, 5.75)} />
-    <!-- Sensors: occupancy domes on ceilings, air sensors on walls. -->
-    {[PLACES.occupancy, ...ALSO.filter((a) => a.component === 'occupancy')].map((p) => (
-      <path d={`M ${p.x - 0.14} ${Y(p.z)} a 0.14 0.14 0 0 0 0.28 0 z`} />
-    ))}
-    {[PLACES.air, ...ALSO.filter((a) => a.component === 'air')].map((p) => (
-      <rect x={p.x - (p.x > WIDTH / 2 ? 0.15 : 0)} y={Y(p.z + 0.12)} width={0.15} height={0.24} />
-    ))}
-    <!-- The rack in the comms room, with its named units. -->
+    <rect {...box(13.35, 14.05, 1.25, 1.95)} />
     <rect {...box(RACK.x - RACK.w / 2, RACK.x + RACK.w / 2, RACK.z0, RACK.z0 + RACK.h)} />
     {[PLACES['head-end'].z, PLACES['local-ai'].z, RECORDER.z].map((z) => (
       <rect {...box(RACK.x - RACK.w / 2 + 0.05, RACK.x + RACK.w / 2 - 0.05, z - 0.09, z + 0.09)} class="unit" />
+    ))}
+    {(['cloud', 'cloud-ai', 'third-party'] as const).map((id) => (
+      <rect {...box(PLACES[id].x - 0.25, PLACES[id].x + 0.25, PLACES[id].z - 0.09, PLACES[id].z + 0.09)} class="unit" />
     ))}
   </g>
 
   <!-- Labels. -->
   {Object.entries(PLACES).map(([id, p]) => {
     const right = p.side !== 'left';
-    const x = p.x + (right ? (id === 'head-end' || id === 'local-ai' ? RACK.w / 2 + 0.25 : 0.4) : -0.4);
+    const x = p.x + (right ? (id === 'head-end' || id === 'local-ai' ? RACK.w / 2 + 0.25 : 0.45) : -0.45);
     const anchor = right ? 'start' : 'end';
     return p.compact
       ? <text x={x} y={Y(p.z) + 0.13} text-anchor={anchor} class="label compact">{p.label}</text>
@@ -176,7 +161,7 @@ const stopAt = T.hops.map((h) => ({ n: h.n, ...PLACES[h.component] }));
   <text x={RACK.x + RACK.w / 2 + 0.25} y={Y(RECORDER.z) + 0.13} class="label compact sensitive-text">{RECORDER.label}</text>
 
   <!-- Whatever the page draws over the drawing: the trace's event, its
-       route so far, the copies it leaves, the seams it crosses. -->
+       route so far, the copies it leaves, the handoffs it crosses. -->
   <slot />
 
   {stops && stopAt.map((s) => (
@@ -199,27 +184,24 @@ const stopAt = T.hops.map((h) => ({ n: h.n, ...PLACES[h.component] }));
   .earth { stroke: none !important; }
   .heavy { stroke: var(--ks-instrument-muted) !important; stroke-width: 1.25 !important; }
   .slab { fill: oklch(100% 0 0 / 0.07) !important; stroke: var(--dse-drawing-heavy) !important; }
-  .wall { stroke: var(--ks-instrument-muted) !important; stroke-width: 1.5 !important; }
+  .wall, .shell { stroke: var(--ks-instrument-muted) !important; stroke-width: 1.5 !important; }
   .leaf { stroke: var(--dse-drawing-heavy) !important; }
-  .ceiling line { stroke: var(--dse-drawing) !important; stroke-dasharray: 3 3; }
-  .core { stroke: var(--dse-drawing) !important; }
   .riser { stroke: var(--dse-drawing-heavy) !important; stroke-dasharray: 1 2; }
-  .partition { stroke: var(--dse-drawing-heavy) !important; }
+  .partition, .floor-line { stroke: var(--dse-drawing-heavy) !important; }
+  .rack { stroke: var(--dse-drawing-heavy) !important; fill: oklch(100% 0 0 / 0.04) !important; }
   .plant { stroke: var(--dse-drawing-heavy) !important; }
-  .louvre { stroke: var(--dse-drawing) !important; }
   .property { stroke: var(--dse-line) !important; stroke-width: 2 !important; stroke-dasharray: 10 4 2 4; }
-  .break { stroke: var(--ks-instrument-muted) !important; stroke-width: 1 !important; }
-  .offsite rect, .offsite polyline { stroke: var(--dse-drawing-heavy) !important; stroke-dasharray: 4 3; }
-  .racks { stroke: var(--dse-drawing) !important; }
+  /* A break cuts the ground: paper between two zig-zags. */
+  .break .gap { fill: var(--ks-instrument-deep) !important; stroke: none !important; }
+  .break polyline { stroke: var(--ks-instrument-muted) !important; }
 
-  /* Conduits. The event's route is linework until the trace travels it. */
+  /* Cables. The event's route is linework until the trace travels it. */
   .run { stroke-linejoin: round; }
-  .run.background { stroke: var(--dse-drawing) !important; }
   .run.event { stroke: var(--dse-drawing-heavy) !important; stroke-width: 1.25 !important; }
   .run.event.lit { stroke: var(--dse-event) !important; stroke-opacity: .7; }
   .run.sensitive { stroke: var(--dse-sensitive) !important; stroke-opacity: .55; stroke-dasharray: 2 2; }
 
-  .kit rect, .kit circle, .kit path, .kit line, .kit polyline { stroke: var(--ks-instrument-text) !important; stroke-opacity: .8; }
+  .kit rect, .kit polyline, .kit polygon { stroke: var(--ks-instrument-text) !important; stroke-opacity: .8; }
   .kit .thin { stroke-opacity: .45; }
   .kit .unit { fill: oklch(100% 0 0 / 0.14) !important; }
   .kit .sensitive-kit { stroke: var(--dse-sensitive) !important; stroke-opacity: 1; }

@@ -9,6 +9,7 @@ import { section } from '@lib/rulebook-data';
 import { longDate } from '@lib/phases';
 import { getCollection } from 'astro:content';
 import { PLACES } from '@lib/section';
+import { getCollection as getAll } from 'astro:content';
 import { u } from '@lib/url';
 import { kb } from '@lib/scope';
 
@@ -19,6 +20,8 @@ const r = all.find((x) => x.id === Astro.params.id)!;
 const A = Object.fromEntries((await articles()).map((a) => [a.data.article, a]));
 const instruments = Object.fromEntries((await getCollection('instruments')).map((i) => [i.id, i]));
 const T = await trace();
+/* Components alongside the path are not drawn; name them from the knowledge base. */
+const names = Object.fromEntries((await getAll('components')).map((c) => [c.id, c.data.title]));
 const stops = T.hops.filter((h) => r.data.attaches_to.includes(h.component));
 const alongside = r.data.attaches_to.filter((c) => !T.hops.some((h) => h.component === c));
 const body = section(r.body, 'The right').slice(1);
@@ -50,7 +53,7 @@ const i = all.indexOf(r);
   <h2>Where it lives</h2>
   <p>
     {stops.map((h, k) => <>{k > 0 && ', '}<a href={u(`/trace/?hop=${h.n}`)}>Stop {h.n}, {PLACES[h.component].label}</a></>)}
-    {alongside.length > 0 && <>{stops.length ? '; alongside the path: ' : 'Alongside the path: '}{alongside.map((c) => PLACES[c]?.label ?? c).join(', ')}</>}.
+    {alongside.length > 0 && <>{stops.length ? '; alongside the path: ' : 'Alongside the path: '}{alongside.map((c) => names[c] ?? c).join(', ')}</>}.
   </p>
 
   {r.data.pairs_with.length > 0 && (

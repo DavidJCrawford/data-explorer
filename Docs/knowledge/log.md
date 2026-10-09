@@ -1,6 +1,7 @@
 # Directory Update Log
 
 ## 2026-10-09
+* **Decided** (David): [a simpler building, and cables underground](decisions/underground-and-simpler.md). The office is reduced to the entrance, the riser and the comms room; the data leaves underground through the cable entry to a data centre, an AI data centre and the third party's office, with breaks in the ground for the kilometres between them. Rewrote [the building](building/the-building.md) and [the section drawing](design/the-section-drawing.md).
 * **Updated**: the [AI Act](law/wider-rulebook/ai-act.md) and [Digital Omnibus](law/wider-rulebook/digital-omnibus.md). The AI omnibus is Regulation (EU) 2026/1744, published in the Official Journal on 24 July 2026 (confirmed on EUR-Lex): high-risk duties from 2 December 2027, and from 2 August 2028 for AI in regulated products, now a phase of its own. The Data Act part is still not agreed.
 * **Added**: structured `actors` and `chapters` in [actors](law/eu-data-act/actors.md) and [chapters](law/eu-data-act/chapters.md), for the article pages; the build checks them against their tables and every article's `binds` and chapter against them.
 * **Published**: the bundle with the site at /knowledge/, with a manifest. [The article](thesis/the-article.md) carries `publish: false` and is held back until the Trends Report publishes it.

@@ -68,7 +68,7 @@ export async function rulebookData() {
   const alongside = components.map((c) => c.id).filter((id) => !onPath.includes(id));
   const columns = [
     ...T.hops.map((h) => ({ n: h.n as number | null, label: PLACES[h.component].label, place: h.place, line: !!h.crosses_property_line })),
-    { n: null, label: 'Alongside', place: alongside.map((id) => PLACES[id]?.label ?? id).join(', '), line: false },
+    { n: null, label: 'Alongside', place: alongside.map((id) => components.find((c) => c.id === id)?.data.title ?? id).join(', '), line: false },
   ];
   const cellsFor = (ids: string[]) => [...onPath.map((c) => ids.includes(c)), alongside.some((c) => ids.includes(c))];
   const stopsFor = (ids: string[]) => T.hops.filter((h) => ids.includes(h.component)).map((h) => h.n);
