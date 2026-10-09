@@ -2,12 +2,13 @@
  *  base and the section's geometry. The page renders the cards and marks from
  *  this, and hands the client script only the numbers it moves with.
  *
- *  Coordinates here are SVG units: metres, y down (lib/section.ts `Y`).
+ *  Coordinates here are the drawing's 2D units: the 3D model in
+ *  lib/section.ts projected isometrically (`iso`), y down.
  */
 import { getCollection } from 'astro:content';
 import { trace, rights } from './knowledge';
 import { ledger, steps } from './ledger.mjs';
-import { PLACES, RUNS, PROPERTY, RECORDER, RACK, EXTENT, FOOTAGE_LINE, Y } from './section';
+import { PLACES, RUNS, PROPERTY, EXTENT, FOOTAGE_LINE, LOT_Z, iso } from './section';
 
 export type Path = 'composite' | 'governed';
 export const PATHS: Path[] = ['composite', 'governed'];
@@ -33,25 +34,41 @@ export async function traceData() {
   const legs = T.hops.slice(1).map((h, i) => {
     const run = RUNS.find((r) => r.stream === 'event' && r.to === h.component);
     if (!run) throw new Error(`no event run arrives at ${h.component}`);
-    const points = run.points.map(([x, z]) => [x, Y(z)] as Pt);
-    return { n: h.n, points, length: length(points), jump: run.from !== T.hops[i].component };
+    const points = run.points.map((p) => iso(p) as Pt);
+    /* Segments, so the travelled route can be drawn as the reference draws
+       it: solid along a floor or duct, dotted where it drops between them. */
+    let acc = 0;
+    const segs = run.points.slice(1).map((b3, k) => {
+      const a3 = run.points[k];
+      const a = points[k], b = points[k + 1], len = dist(a, b);
+      const drop = a3[0] === b3[0] && a3[1] === b3[1];
+      // Fast where there is nothing to look at: dropping between floors, or in a duct.
+      const s = { a, b, from: acc, len, drop, fast: drop || (a3[2] < LOT_Z && b3[2] < LOT_Z) };
+      acc += len;
+      return s;
+    });
+    return { n: h.n, points, segs, run, length: length(points), jump: run.from !== T.hops[i].component };
   });
   const at = [0];
   for (const l of legs) at.push(at[at.length - 1] + l.length);
 
-  /* Where the event crosses the property line (underground, at its far
-     side): the leg, and how far along it. */
+  /* Where the event crosses the property line: found in the 3D model (the
+     duct passing the lot's far edge, underground), then measured along the
+     drawn line. The projection is linear, so the fraction along a segment is
+     the same in both. */
   const crossLeg = T.hops.findIndex((h) => h.crosses_property_line);
   const cl = legs[crossLeg - 1];
   let cross = -1;
-  for (let i = 1, acc = 0; i < cl.points.length; i++) {
-    const [a, b] = [cl.points[i - 1], cl.points[i]];
-    if ((a[0] - PROPERTY.x1) * (b[0] - PROPERTY.x1) <= 0 && a[0] !== b[0]) { cross = acc + Math.abs((PROPERTY.x1 - a[0]) / (b[0] - a[0])) * dist(a, b); break; }
-    acc += dist(a, b);
+  for (const s of cl.segs) {
+    const k = cl.segs.indexOf(s), a3 = cl.run.points[k], b3 = cl.run.points[k + 1];
+    if ((a3[0] - PROPERTY.x1) * (b3[0] - PROPERTY.x1) <= 0 && a3[0] !== b3[0]) {
+      cross = s.from + Math.abs((PROPERTY.x1 - a3[0]) / (b3[0] - a3[0])) * s.len;
+      break;
+    }
   }
   if (cross < 0) throw new Error('the event never crosses the property line on the leg that should cross it');
 
-  const stops = T.hops.map((h) => ({ n: h.n, x: PLACES[h.component].x, y: Y(PLACES[h.component].z) }));
+  const stops = T.hops.map((h) => { const [x, y] = iso(PLACES[h.component].at); return { n: h.n, x, y }; });
 
   /* Per archetype: running totals, what happened at each hop, the seam ticks
      (at the middle of the leg the data changed hands on) and the copies left
@@ -69,8 +86,10 @@ export async function traceData() {
     });
     const copies = st.flatMap((s) => Array.from({ length: s.made }, (_, k) => {
       const a = stops[s.n];
-      const left = PLACES[T.hops[s.n].component].side === 'left';
-      return { n: s.n, x: a.x + (left ? 0.45 + k * 0.32 : -0.45 - k * 0.32), y: a.y - 0.45 };
+      // Beside the ring, away from the label, one mark per copy.
+      const p = PLACES[T.hops[s.n].component];
+      const side = (p.dx ?? 2) > 0 ? -1 : 1;
+      return { n: s.n, x: a.x + side * (0.95 + k * 0.5), y: a.y + 0.55 };
     }));
     const chain = st.map((s) => {
       const parts = [s.holders.map(short).join(' + ')];
@@ -88,11 +107,13 @@ export async function traceData() {
   }>;
 
   /* The camera footage: where its copies sit, inside and beyond. */
-  const recorder: Pt = [RACK.x, Y(RECORDER.z)];
+  /* The footage's marks: its copy in the recorder, its copy in the cloud
+     (where its route ends), and where it would cross the property line. */
+  const footRun = RUNS.find((r) => r.stream === 'sensitive' && r.only === 'composite')!;
   const footage = {
-    recorder,
-    cloud: [37.4, Y(1.0)] as Pt,
-    crossAt: [FOOTAGE_LINE.x, Y(FOOTAGE_LINE.z)] as Pt,
+    recorder: iso(PLACES.recorder.at) as Pt,
+    cloud: iso(footRun.points[footRun.points.length - 1]) as Pt,
+    crossAt: iso(FOOTAGE_LINE) as Pt,
     onSite: T.sensitive.on_site,
     beyond: { composite: T.sensitive.composite, governed: T.sensitive.governed },
   };
@@ -131,7 +152,7 @@ export async function traceData() {
     hops: T.hops.map((h) => ({ n: h.n, component: h.component, place: h.place, label: PLACES[h.component].label })),
     parties: T.parties,
     legs, at, stops, crossLeg, cross, footage, paths, cards,
-    extent: { x: EXTENT.x0, y: Y(EXTENT.z1), w: EXTENT.x1 - EXTENT.x0, h: EXTENT.z1 - EXTENT.z0 },
+    extent: EXTENT,
   };
 }
 

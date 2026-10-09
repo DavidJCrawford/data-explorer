@@ -14,19 +14,22 @@ import Base from '@layouts/Base.astro';
 import Section from '@components/Section.astro';
 import Disclaimer from '@components/Disclaimer.astro';
 import { trace } from '@lib/knowledge';
-import { PLACES, Y } from '@lib/section';
+import { PLACES, iso } from '@lib/section';
 
 export const getStaticPaths = (() =>
   process.env.DRAFTS === '1' ? [{ params: { name: 'section' } }] : []) satisfies GetStaticPaths;
 
 const T = await trace();
-/* Working zooms, in metres of drawing across the frame. A phone at 375 px
-   shows 12 m (about 31 px a metre); the laptop stage, 1080 by 700 px beside
-   a 360 px ledger, shows 24 m (45 px a metre). */
-const PHONE = { w: 12, h: 12 * 16 / 9 };
-const LAPTOP = { w: 24, h: 24 * 700 / 1080 };
-const frame = (x: number, z: number, f: { w: number; h: number }): [number, number, number, number] =>
-  [x - f.w / 2, Y(z) - f.h / 2, f.w, f.h];
+/* Working zooms, in drawing units across the frame. A phone at 375 px shows
+   16 (about 23 px a unit); the laptop stage, 1080 by 700 px beside a 360 px
+   ledger, is at 32 px a unit. */
+const PHONE = { w: 16, h: 16 * 16 / 9 };
+const LAPTOP = { w: 1080 / 32, h: 700 / 32 };
+/** A frame of the given size centred on a place. */
+const frame = (id: string, f: { w: number; h: number }): [number, number, number, number] => {
+  const [x, y] = iso(PLACES[id].at);
+  return [x - f.w / 2, y - f.h / 2, f.w, f.h];
+};
 ---
 <Base title="Draft: the section" chrome={false}>
   <div class="draft instrument">
@@ -44,8 +47,8 @@ const frame = (x: number, z: number, f: { w: number; h: number }): [number, numb
     <section>
       <h2 class="mono">At true size: the comms room on a 375 px phone, and in the 1080 px laptop stage</h2>
       <div class="true">
-        <div class="frame phone-true"><Section viewBox={frame(PLACES['head-end'].x, PLACES['head-end'].z, PHONE)} route /></div>
-        <div class="frame laptop-true"><Section viewBox={frame(PLACES['head-end'].x, PLACES['head-end'].z, LAPTOP)} route /></div>
+        <div class="frame phone-true"><Section viewBox={frame('head-end', PHONE)} route /></div>
+        <div class="frame laptop-true"><Section viewBox={frame('head-end', LAPTOP)} route /></div>
       </div>
     </section>
 
@@ -58,8 +61,8 @@ const frame = (x: number, z: number, f: { w: number; h: number }): [number, numb
             <figure>
               <figcaption class="mono">{h.n} · {p.label}</figcaption>
               <div class="pair">
-                <div class="frame phone"><Section viewBox={frame(p.x, p.z, PHONE)} route /></div>
-                <div class="frame laptop"><Section viewBox={frame(p.x, p.z, LAPTOP)} route /></div>
+                <div class="frame phone"><Section viewBox={frame(h.component, PHONE)} route /></div>
+                <div class="frame laptop"><Section viewBox={frame(h.component, LAPTOP)} route /></div>
               </div>
             </figure>
           );

@@ -80,15 +80,17 @@ scripts/check_site.py        every internal link, unchanged from the siblings
   set in the repository's own git config, so the public history does not name
   the author's employer.
 
-- **The section is in metres.** `lib/section.ts` holds the geometry and
-  `components/Section.astro` draws it; the camera will move by changing the
-  viewBox, which `Section` takes as a prop. Strokes are non-scaling, type is in
-  metres. Since the first refinement round it is a street: the office, buried
-  ducts, a data centre, an AI data centre and the third party's office, with
-  breaks in the ground for the kilometres between them
-  (`decisions/underground-and-simpler.md`). The property-line crossing is
-  found where the event's route crosses `PROPERTY.x1` underground; if the
+- **The drawing is a 3D model projected isometrically** (`lib/section.ts`:
+  `iso()`, the model in metres, floors exploded 13 m apart) and drawn by
+  `components/Section.astro`, back to front, with opaque plates. Everything
+  downstream works in the projected 2D units. Since refinement round 2 it is
+  an exploded isometric (`decisions/exploded-isometric.md`); the underground
+  route from round 1 is kept. The property-line crossing is found in 3D
+  (the duct passing `PROPERTY.x1`) and measured along the drawn line; if the
   route stops crossing it, the build throws.
+- **The travelled route is one `<line>` per segment** so drops stay dotted;
+  `segs` in `trace-data.ts` carry each segment's start distance, length,
+  whether it is a drop, and whether the event runs fast there.
 - **Drafts never ship.** `/draft/[name]` has no paths unless `DRAFTS=1`. Do not
   create `/trace/` until it works: the landing page's button turns on the
   moment that file exists.

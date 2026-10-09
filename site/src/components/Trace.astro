@@ -34,7 +34,7 @@ const fin = { composite: D.paths.composite.totals[last], governed: D.paths.gover
 
 /* The client gets only what it moves with. */
 const client = {
-  legs: D.legs.map((l) => ({ points: l.points, length: l.length, jump: l.jump })),
+  legs: D.legs.map((l) => ({ points: l.points, length: l.length, jump: l.jump, segs: l.segs.map((s) => ({ from: s.from, len: s.len, fast: s.fast })) })),
   at: D.at, stops: D.stops, crossLeg: D.crossLeg, cross: D.cross, extent: D.extent,
   hops: D.hops,
   paths: Object.fromEntries(PATHS.map((p) => [p, {
@@ -62,7 +62,11 @@ const pct = (s: number) => `${(100 * s / total).toFixed(3)}%`;
     <div class="stage" data-stage>
       <Section viewBox={fullView} label="Section through the building, following a door event to the cloud">
         <g class="overlay" aria-hidden="true">
-          {D.legs.map((_, i) => <polyline class="travelled" data-leg={i} points="" />)}
+          {/* The route so far, segment by segment: solid, or dotted where it drops. */}
+          {D.legs.map((l, i) => l.segs.map((s, k) => (
+            <line class:list={['travelled', s.drop && 'drop']} data-leg={i} data-seg={k}
+                  x1={s.a[0]} y1={s.a[1]} x2={s.a[0]} y2={s.a[1]} data-x2={s.b[0]} data-y2={s.b[1]} visibility="hidden" />
+          )))}
           {PATHS.map((p) => D.paths[p].seams.map((s) => (
             <g class:list={['seam', `only-${p}`, s.chosen && 'chosen']} data-n={s.n}>
               <line x1={s.x - s.dy * 0.35} y1={s.y + s.dx * 0.35} x2={s.x + s.dy * 0.35} y2={s.y - s.dx * 0.35} />
@@ -71,13 +75,13 @@ const pct = (s: number) => `${(100 * s / total).toFixed(3)}%`;
             </g>
           )))}
           {PATHS.map((p) => D.paths[p].copies.map((c) => (
-            <rect class:list={['copy', `only-${p}`]} data-n={c.n} x={c.x - 0.1} y={c.y - 0.1} width={0.2} height={0.2} />
+            <rect class:list={['copy', `only-${p}`]} data-n={c.n} x={c.x - 0.18} y={c.y - 0.18} width={0.36} height={0.36} />
           )))}
-          <rect class="footage onsite" x={D.footage.recorder[0] - 0.62} y={D.footage.recorder[1] - 0.1} width={0.2} height={0.2} />
-          <rect class="footage beyond only-composite" x={D.footage.cloud[0] - 0.1} y={D.footage.cloud[1] - 0.1} width={0.2} height={0.2} />
+          <rect class="footage onsite" x={D.footage.recorder[0] - 1.1} y={D.footage.recorder[1] + 0.3} width={0.36} height={0.36} />
+          <rect class="footage beyond only-composite" x={D.footage.cloud[0] - 0.18} y={D.footage.cloud[1] - 0.18} width={0.36} height={0.36} />
           <g class="footage stays only-governed" transform={`translate(${D.footage.crossAt[0]} ${D.footage.crossAt[1]})`}>
-            <line x1={0} y1={-0.45} x2={0} y2={0.45} />
-            <text x={-0.3} y={-0.55} text-anchor="end">Footage stays on site</text>
+            <line x1={-0.5} y1={-0.6} x2={0.5} y2={0.6} />
+            <text x={-0.7} y={-0.7} text-anchor="end">Footage stays on site</text>
           </g>
           <circle class="event-dot" data-event cx={D.stops[0].x} cy={D.stops[0].y} r={0.18} />
         </g>
@@ -263,7 +267,8 @@ const pct = (s: number) => `${(100 * s / total).toFixed(3)}%`;
   .stage { position: relative; overflow: hidden; min-height: 0; }
   .panel { border-left: 1px solid var(--ks-instrument-rule); overflow: auto; padding: 18px 20px 20px; display: grid; gap: 18px; align-content: start; }
 
-  .stage :global(.travelled) { fill: none !important; stroke: var(--dse-event) !important; stroke-width: 2 !important; stroke-linejoin: round; }
+  .stage :global(.travelled) { fill: none !important; stroke: var(--dse-event) !important; stroke-width: 3 !important; stroke-linecap: round; }
+  .stage :global(.travelled.drop) { stroke-dasharray: 1 6; stroke-width: 3.5 !important; }
   /* Not `.event`: the drawing's route lines carry that class as their stream. */
   .stage :global(.event-dot) { fill: var(--dse-event) !important; stroke: var(--ks-instrument-deep) !important; stroke-width: 2 !important; }
   .stage :global(.copy) { fill: var(--dse-event) !important; stroke: none !important; opacity: 0; transition: opacity .3s; }
@@ -272,12 +277,12 @@ const pct = (s: number) => `${(100 * s / total).toFixed(3)}%`;
   .stage :global(.seam.on) { opacity: 1; }
   .stage :global(.seam line) { stroke: var(--dse-seam) !important; stroke-width: 2.5 !important; }
   .stage :global(.seam.chosen line) { stroke: var(--dse-yours) !important; }
-  .stage :global(.seam text) { font-family: var(--ks-mono), monospace; font-size: .32px; fill: var(--dse-seam-text) !important; }
+  .stage :global(.seam text) { font-family: var(--ks-mono), monospace; font-size: .44px; fill: var(--dse-seam-text) !important; }
   .stage :global(.seam.chosen text) { fill: var(--dse-yours) !important; }
   .stage :global(.footage) { fill: var(--dse-sensitive) !important; stroke: none !important; opacity: 0; transition: opacity .3s; }
   .stage :global(.footage.on) { opacity: .95; }
   .stage :global(.footage.stays line) { stroke: var(--dse-sensitive) !important; stroke-width: 2.5 !important; }
-  .stage :global(.footage.stays text) { font-family: var(--ks-mono), monospace; font-size: .3px; fill: var(--dse-sensitive) !important; }
+  .stage :global(.footage.stays text) { font-family: var(--ks-mono), monospace; font-size: .44px; fill: var(--dse-sensitive) !important; }
   .stage :global(.footage.stays.flash) { animation: flash 1.6s var(--ks-ease); }
   @keyframes flash { 0%, 40% { opacity: 1; } 15% { opacity: .3; } 100% { opacity: .95; } }
   /* The camera's footage run out of the building is drawn only once it has

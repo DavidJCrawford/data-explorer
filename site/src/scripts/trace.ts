@@ -21,7 +21,7 @@ import { radioGroup } from './radiogroup';
 type Path = 'composite' | 'governed';
 interface Totals { copies: number; hands: number; seams: number; chosenHands: number; chosenSeams: number; handList: string[] }
 interface Data {
-  legs: { points: Pt[]; length: number; jump: boolean }[];
+  legs: { points: Pt[]; length: number; jump: boolean; segs: { from: number; len: number; fast: boolean }[] }[];
   at: number[];
   stops: { n: number; x: number; y: number }[];
   crossLeg: number; cross: number;
@@ -43,7 +43,7 @@ function init(root: HTMLElement) {
   const stage = $('[data-stage]');
   const svg = $<SVGSVGElement>('svg.section');
   const eventDot = $<SVGCircleElement>('[data-event]');
-  const travelled = $$<SVGPolylineElement>('.travelled');
+  const travelled = $$<SVGLineElement>('.travelled');
   const tags = $('[data-tags]');
   const tagEls = $$('[data-tag]');
   const modal = $('[data-modal]');
@@ -66,9 +66,13 @@ function init(root: HTMLElement) {
 
   /* ── Pace. Metres of drawing per second; the building is about 28 m deep. ── */
   const V = 4.2;
-  /** Below ground the event runs in a duct for tens of metres with nothing
-   *  to look at, so it goes faster there (SVG y > 0 is below ground). */
-  const V_DUCT = 11;
+  /** Dropping between exploded floors, or running in a duct, there is
+   *  nothing to look at, so the event goes faster there. */
+  const V_FAST = 14;
+  const fastAt = (x: number) => {
+    const i = legAt(x), into = x - D.at[i];
+    return D.legs[i].segs.find((s) => into >= s.from && into <= s.from + s.len)?.fast ?? false;
+  };
   const BRAKE_S = 1.3;          // full pace to rest
   const A = V / BRAKE_S;        // so the braking distance is V²/2A
   const CARD_DELAY = 450;
@@ -102,8 +106,8 @@ function init(root: HTMLElement) {
   let W = 1, H = 1;
   const cam = { x: D.stops[0].x, y: D.stops[0].y, w: 24 };
   const look: Pt = [0, -1];
-  /** Working zoom: 12 m across a phone, 45 px a metre on anything wider. */
-  const workingW = () => (W < 700 ? 12 : W / 45);
+  /** Working zoom: 16 units across a phone, 32 px a unit on anything wider. */
+  const workingW = () => (W < 700 ? 16 : W / 32);
   function camTarget() {
     if (mode === 'finale') {
       const e = D.extent, w = Math.max(e.w, e.h * W / H) * 1.04;
@@ -126,7 +130,7 @@ function init(root: HTMLElement) {
   function applyCamera() {
     const h = cam.w * H / W;
     svg.setAttribute('viewBox', `${cam.x - cam.w / 2} ${cam.y - h / 2} ${cam.w} ${h}`);
-    eventDot.setAttribute('r', String(6 * cam.w / W));
+    eventDot.setAttribute('r', String(7 * cam.w / W));
     const ppm = W / cam.w;
     const showTags = ppm < 20;
     tags.classList.toggle('on', showTags);
@@ -152,10 +156,16 @@ function init(root: HTMLElement) {
   /* ── Drawing the state ── */
   function drawRoute() {
     const { p, leg, into } = position(s);
-    travelled.forEach((pl, i) => {
-      if (i < leg) pl.setAttribute('points', D.legs[i].points.map((q) => q.join(',')).join(' '));
-      else if (i === leg) pl.setAttribute('points', along(D.legs[i].points, into).passed.map((q) => q.join(',')).join(' '));
-      else pl.setAttribute('points', '');
+    // Each segment of the route is its own line: full, partial, or hidden.
+    travelled.forEach((ln) => {
+      const i = Number(ln.dataset.leg), k = Number(ln.dataset.seg);
+      const sg = D.legs[i].segs[k];
+      const x1 = Number(ln.getAttribute('x1')), y1 = Number(ln.getAttribute('y1'));
+      const bx = Number(ln.dataset.x2), by = Number(ln.dataset.y2);
+      const done = i < leg ? 1 : i > leg ? 0 : Math.max(0, Math.min(1, (into - sg.from) / sg.len));
+      ln.setAttribute('visibility', done > 0 ? 'visible' : 'hidden');
+      ln.setAttribute('x2', String(x1 + (bx - x1) * done));
+      ln.setAttribute('y2', String(y1 + (by - y1) * done));
     });
     eventDot.setAttribute('cx', String(p[0]));
     eventDot.setAttribute('cy', String(p[1]));
@@ -293,7 +303,7 @@ function init(root: HTMLElement) {
     if (mode === 'travel' && playing) {
       const d = target - s;
       const brake = Math.sqrt(2 * A * Math.max(0, d));
-      const cruise = position(s).p[1] > 0.2 ? V_DUCT : V;
+      const cruise = s > 0 && fastAt(s) ? V_FAST : V;
       // Slow down on leaving the duct as smoothly as on arriving at a stop.
       v = Math.min(v + A * dt, Math.max(cruise, v - A * dt), brake);
       s = Math.min(target, s + Math.max(v, 0.05) * dt);

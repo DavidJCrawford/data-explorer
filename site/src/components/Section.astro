@@ -1,24 +1,26 @@
 ---
-/** The section drawing, rendered at build time (Docs/knowledge/design/the-section-drawing.md).
+/** The drawing, rendered at build time (Docs/knowledge/design/the-section-drawing.md):
+ *  an exploded isometric of the office, floor by floor, its lot and the lots
+ *  its data reaches, with the routes laid over them. White on black.
  *
- *  One SVG in metres (lib/section.ts): the office, then the ground between
- *  sites with the ducts in it, then a cloud data centre, an AI data centre
- *  and the third party's office. The trace's camera moves by changing the
- *  viewBox, so `viewBox` is a prop. Linework uses non-scaling strokes so a
- *  hairline stays a hairline at every zoom; text is in metres and scales with
- *  the camera, which is what lets labels read at the trace's working zoom.
+ *  Everything is projected from the 3D model in lib/section.ts and drawn
+ *  back to front, so a nearer plate, wall or rack hides what is behind it.
+ *  Plates carry a heavy outline; walls are cut low so the rooms read; routes
+ *  run solid across floors and dotted where they drop between them.
  *
- *  Nothing here is interactive. Decoration never intercepts the pointer
- *  (SPEC §7): the whole drawing is pointer-events: none.
+ *  The trace's camera moves by changing the viewBox, so `viewBox` is a prop.
+ *  Strokes do not scale; text is in drawing units and scales with the camera.
+ *  Nothing here is interactive: pointer-events: none throughout (SPEC §7).
  */
 import { trace } from '@lib/knowledge';
 import {
-  Y, WIDTH, SLAB, FLOORS, ROOF, RISER, ROOMS, DOOR, PROPERTY, SITES, RAISED, BREAKS, DUCT,
-  PLACES, RACK, RECORDER, RUNS, EXTENT, ENTRY, ceiling, assertPlaced, type Site,
+  iso, OFFICE, PLATE, WALL, LEVELS, WALLS, FURNITURE, RACK, CONTROLLER, READER, CAMERA,
+  LOT_Z, DUCT, PROPERTY, SITES, ROWS, BREAKS, PLACES, RUNS, EXTENT, assertPlaced,
+  type P3, type P2, type Box, type Seg,
 } from '@lib/section';
 
 interface Props {
-  /** [x, y, width, height] in the drawing's SVG units (metres, y down). */
+  /** [x, y, width, height] in drawing units. */
   viewBox?: [number, number, number, number];
   /** Number the trace's stops. For review, and the no-JS form. */
   stops?: boolean;
@@ -35,194 +37,253 @@ assertPlaced([
   ...T.hops.flatMap((h) => Object.values(h.alternative ?? {})),
 ]);
 
-const full: [number, number, number, number] = [EXTENT.x0, Y(EXTENT.z1), EXTENT.x1 - EXTENT.x0, EXTENT.z1 - EXTENT.z0];
-const { viewBox = full, stops = false, route = false, label = 'A section through the office, the ground and the buildings its data travels to', class: cls } = Astro.props;
+const full: [number, number, number, number] = [EXTENT.x, EXTENT.y, EXTENT.w, EXTENT.h];
+const { viewBox = full, stops = false, route = false, label = 'An exploded drawing of the office, floor by floor, and the buildings its data travels to', class: cls } = Astro.props;
 
-const pts = (p: [number, number][]) => p.map(([x, z]) => `${x},${Y(z)}`).join(' ');
-/** A rectangle from metres: x0..x1 across, z0..z1 up. */
-const box = (x0: number, x1: number, z0: number, z1: number) => ({ x: x0, y: Y(z1), width: x1 - x0, height: z1 - z0 });
+const pts = (ps: P3[]) => ps.map((p) => iso(p).map((n) => n.toFixed(3)).join(',')).join(' ');
 
-/* A data centre's rack rows: denser and taller where the AI is. */
-const racks = (s: Site) => {
-  const step = s.id === 'cloud-ai' ? 1.1 : 1.6, h = s.id === 'cloud-ai' ? 2.6 : 2.2;
-  const out: { x: number; h: number }[] = [];
-  for (let x = s.x0 + 2.4; x <= s.x1 - 2.4; x += step) out.push({ x, h });
-  return out;
-};
-/* A break in the ground: two zig-zags with the ground cut away between. */
-const zig = (x: number) => {
-  const out: [number, number][] = [];
-  for (let z = 0.5, i = 0; z >= EXTENT.z0; z -= 0.5, i++) out.push([x + (i % 2 ? 0.25 : -0.25), z]);
-  return out;
-};
+/* ── Shapes ── */
 
-const stopAt = T.hops.map((h) => ({ n: h.n, ...PLACES[h.component] }));
-const office = FLOORS;
+/** A plate (slab or lot): its silhouette, outlined heavily, and the three
+ *  visible faces. */
+function plate(x0: number, y0: number, x1: number, y1: number, z: number, t = PLATE) {
+  return {
+    top: pts([[x0, y0, z], [x1, y0, z], [x1, y1, z], [x0, y1, z]]),
+    right: pts([[x1, y0, z], [x1, y1, z], [x1, y1, z - t], [x1, y0, z - t]]),
+    left: pts([[x0, y1, z], [x1, y1, z], [x1, y1, z - t], [x0, y1, z - t]]),
+    outline: pts([[x0, y0, z], [x1, y0, z], [x1, y0, z - t], [x1, y1, z - t], [x0, y1, z - t], [x0, y1, z]]),
+  };
+}
+/** A box's three visible faces. */
+function box([x0, y0, x1, y1, h]: Box, z: number) {
+  return {
+    top: pts([[x0, y0, z + h], [x1, y0, z + h], [x1, y1, z + h], [x0, y1, z + h]]),
+    right: pts([[x1, y0, z], [x1, y1, z], [x1, y1, z + h], [x1, y0, z + h]]),
+    left: pts([[x0, y1, z], [x1, y1, z], [x1, y1, z + h], [x0, y1, z + h]]),
+    key: (x0 + x1) / 2 + (y0 + y1) / 2,
+  };
+}
+/** A wall cut low: its face and its top edge. */
+function wall([x0, y0, x1, y1]: Seg, z: number) {
+  return {
+    face: pts([[x0, y0, z], [x1, y1, z], [x1, y1, z + WALL], [x0, y0, z + WALL]]),
+    top: pts([[x0, y0, z + WALL], [x1, y1, z + WALL]]),
+    key: (x0 + x1) / 2 + (y0 + y1) / 2 + 0.01,
+  };
+}
+type Item = { kind: 'wall'; w: ReturnType<typeof wall> } | { kind: 'box'; b: ReturnType<typeof box>; cls: string };
+/** Walls, furniture and kit on one floor, farthest first. */
+function floorItems(walls: Seg[], boxes: { b: Box; cls: string }[], z: number): Item[] {
+  return [
+    ...walls.map((s) => ({ kind: 'wall' as const, w: wall(s, z) })),
+    ...boxes.map(({ b, cls }) => ({ kind: 'box' as const, b: box(b, z), cls })),
+  ].sort((a, b) => (a.kind === 'wall' ? a.w.key : a.b.key) - (b.kind === 'wall' ? b.w.key : b.b.key));
+}
+
+/* ── The office, floor by floor ── */
+
+const kitOn = (i: number) => [
+  ...FURNITURE[i].map((b) => ({ b, cls: 'furniture' })),
+  ...(i === 0 ? [{ b: READER, cls: 'kit' }, { b: CAMERA, cls: 'kit sensitive-kit' }, { b: CONTROLLER, cls: 'kit' }] : []),
+  ...(i === 2 ? [{ b: RACK, cls: 'kit' }] : []),
+];
+const floors = LEVELS.map((l, i) => ({
+  ...l,
+  plate: plate(OFFICE.x0, OFFICE.y0, OFFICE.x1, OFFICE.y1, l.z),
+  items: floorItems(WALLS[i], kitOn(i), l.z),
+  label: { at: iso([OFFICE.x0 + 0.6, OFFICE.y1 + 0.9, l.z - PLATE]), text: `${l.name} · ${l.note}` },
+}));
+/** Dotted guides between exploded floors, at the corners. */
+const corners: [number, number][] = [[OFFICE.x0, OFFICE.y0], [OFFICE.x1, OFFICE.y0], [OFFICE.x1, OFFICE.y1], [OFFICE.x0, OFFICE.y1]];
+const guides = (zLow: number, zHigh: number) => corners.map(([x, y]) => pts([[x, y, zLow], [x, y, zHigh]]));
+
+/* ── Lots and the other sites ── */
+
+const lot = plate(PROPERTY.x0, PROPERTY.y0, PROPERTY.x1, PROPERTY.y1, LOT_Z);
+const sites = SITES.map((s) => {
+  const walls: Seg[] = [[s.x0, s.y0, s.x1, s.y0], [s.x1, s.y0, s.x1, s.y1], [s.x0, s.y0, s.x0, s.y1], [s.x0, s.y1, s.x1, s.y1]];
+  const boxes = s.kind === 'datacentre'
+    ? (ROWS[s.id] ?? []).map((b) => ({ b, cls: 'rack' }))
+    : [{ b: [s.x0 + 2, s.y0 + 2, s.x0 + 6, s.y0 + 3.4, 0.75] as Box, cls: 'furniture' }, { b: [105.6, 5.4, 106.4, 6.2, 1.6] as Box, cls: 'kit' }];
+  return {
+    ...s,
+    lot: plate(s.x0 - 2, s.y0 - 2, s.x1 + 2, s.y1 + 2, LOT_Z),
+    floor: plate(s.x0, s.y0, s.x1, s.y1, 0),
+    items: floorItems(walls, boxes, 0),
+    guides: [[s.x0, s.y0], [s.x1, s.y0], [s.x1, s.y1], [s.x0, s.y1]].map(([x, y]) => pts([[x, y, LOT_Z], [x, y, -PLATE]])),
+    label: { at: iso([s.x0 - 1.4, s.y1 + 2.9, LOT_Z - PLATE]), text: s.name },
+  };
+});
+
+/* ── Routes, split into segments: flat along a floor, or a drop ── */
+
+const segments = RUNS.flatMap((r) => r.points.slice(1).map((b, i) => {
+  const a = r.points[i];
+  const drop = a[0] === b[0] && a[1] === b[1];
+  return { a, b, drop, run: r };
+}));
+
+/* ── Break marks on the ducts, and their labels ── */
+
+const ductsAt = (x: number) => RUNS.flatMap((r) => r.points.slice(1).flatMap((b, i) => {
+  const a = r.points[i];
+  return a[2] === b[2] && a[2] < LOT_Z && Math.min(a[0], b[0]) < x && Math.max(a[0], b[0]) > x ? [[x, a[1], a[2]] as P3] : [];
+}));
+const breaks = BREAKS.map((x) => {
+  const at = ductsAt(x);
+  const zs = at.map((p) => p[2]);
+  const z0 = Math.max(...zs) + 1.2, z1 = Math.min(...zs) - 1.2;
+  const zig = (dx: number) => {
+    const out: P3[] = [];
+    for (let z = z0, k = 0; z >= z1; z -= 0.6, k++) out.push([x + dx + (k % 2 ? 0.25 : -0.25), 6.7, z]);
+    return pts(out);
+  };
+  return { gap: zig(0), left: zig(-0.5), right: zig(0.5), label: iso([x + 1, 6.7, z1 - 0.6]) };
+});
+
+/* ── Labels with leaders ── */
+
+const labels = Object.entries(PLACES).map(([id, p]) => {
+  const a = iso(p.at);
+  const l: P2 = [a[0] + (p.dx ?? 2), a[1] + (p.dy ?? -2)];
+  return { id, a, l, ...p };
+});
+const stopAt = T.hops.map((h) => ({ n: h.n, a: iso(PLACES[h.component].at) }));
+const ductLabel = iso([30, 6.7, DUCT.trunk]);
 ---
 <svg class:list={['section', cls]} viewBox={viewBox.join(' ')} role="img" aria-label={label}
      preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <pattern id="earth" width="0.8" height="0.8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-      <line x1="0" y1="0" x2="0" y2="0.8" class="hatch" />
-    </pattern>
-  </defs>
 
-  <!-- The ground, and the earth the ducts are buried in. -->
-  <rect x={EXTENT.x0} y={0} width={EXTENT.x1 - EXTENT.x0} height={-EXTENT.z0} fill="url(#earth)" class="earth" />
-  <line x1={EXTENT.x0} y1={0} x2={EXTENT.x1} y2={0} class="heavy" />
-
-  <!-- The office: three storeys, the riser, the entrance and the comms room. -->
-  <g class="office">
-    <rect {...box(-0.2, WIDTH + 0.2, -SLAB, 0)} class="slab" />
-    {office.slice(1).map((f) => <rect {...box(0, WIDTH, f.z - SLAB, f.z)} class="slab" />)}
-    <rect {...box(-0.2, WIDTH + 0.2, ROOF - SLAB, ROOF)} class="slab" />
-    <polyline points={pts([[0, DOOR.z1], [0, ROOF + 0.9]])} class="wall" />
-    <line x1={-0.25} y1={Y(DOOR.z1)} x2={0.25} y2={Y(DOOR.z1)} class="wall" />
-    <rect {...box(-0.03, 0.03, DOOR.z0, DOOR.z1 - 0.05)} class="leaf" />
-    <polyline points={pts([[WIDTH, 0], [WIDTH, ROOF + 0.9]])} class="wall" />
-    <rect {...box(RISER.x0, RISER.x1, 0, ROOF)} class="riser" />
-    <line x1={ROOMS[0].x1} y1={Y(0)} x2={ROOMS[0].x1} y2={Y(ceiling(office[0]))} class="partition" />
-    {office.map((f) => <text x={-0.6} y={Y(f.z + 0.35)} class="floor" text-anchor="end">{f.name}</text>)}
-    {ROOMS.map((r) => <text x={r.x0 + 0.3} y={Y(ceiling(office[r.floor]) - 0.45)} class="room">{r.name}</text>)}
-    <text x={RISER.x0 + 0.1} y={Y(ROOF - SLAB - 0.4)} class="room">Riser</text>
-    <text x={ENTRY.x + 0.25} y={Y(ENTRY.z) - 0.25} class="note">Cable entry</text>
+  <!-- The office's lot: its outline is the property line. -->
+  <g class="lot property">
+    <polygon points={lot.top} class="top" /><polygon points={lot.right} class="side" /><polygon points={lot.left} class="side" />
+    <polygon points={lot.outline} class="outline" />
   </g>
+  {corners.map(([x, y]) => <polyline points={pts([[x, y, LOT_Z], [x, y, -PLATE]])} class="guide" />)}
 
-  <!-- The other sites. -->
-  {SITES.map((s) => (
+  <!-- The office, from the ground floor up: each plate, then what stands on it. -->
+  {floors.map((f, i) => (
+    <g class="floor">
+      <polygon points={f.plate.top} class="top" /><polygon points={f.plate.right} class="side" /><polygon points={f.plate.left} class="side" />
+      <polygon points={f.plate.outline} class="outline" />
+      {f.items.map((it) => it.kind === 'wall'
+        ? <g class="wall"><polygon points={it.w.face} /><polyline points={it.w.top} class="wall-top" /></g>
+        : <g class:list={['box', it.cls]}><polygon points={it.b.top} /><polygon points={it.b.right} /><polygon points={it.b.left} /></g>)}
+      <text class="plate-label" transform={`translate(${f.label.at[0]} ${f.label.at[1]}) rotate(30)`}>{f.label.text}</text>
+      {i < floors.length - 1 && guides(f.z + WALL, floors[i + 1].z - PLATE).map((g) => <polyline points={g} class="guide" />)}
+    </g>
+  ))}
+  <text class="plate-label lot-label" transform={`translate(${iso([PROPERTY.x0 + 0.6, PROPERTY.y1 + 0.9, LOT_Z - PLATE])[0]} ${iso([PROPERTY.x0 + 0.6, PROPERTY.y1 + 0.9, LOT_Z - PLATE])[1]}) rotate(30)`}>Property line</text>
+
+  <!-- The other sites: a lot each, the building's floor on it, its racks. -->
+  {sites.map((s) => (
     <g class="site">
-      {s.kind === 'datacentre' ? (
-        <>
-          <rect {...box(s.x0, s.x1, 0, s.h)} class="shell" />
-          <line x1={s.x0} y1={Y(RAISED)} x2={s.x1} y2={Y(RAISED)} class="floor-line" />
-          {racks(s).map((r) => <rect {...box(r.x - 0.3, r.x + 0.3, RAISED, RAISED + r.h)} class="rack" />)}
-          {s.id === 'cloud-ai'
-            ? <polygon points={pts([[s.x1 - 6, s.h], [s.x1 - 5.4, s.h + 2.2], [s.x1 - 3.6, s.h + 2.2], [s.x1 - 3, s.h]])} class="plant" />
-            : [0, 1, 2].map((i) => <rect {...box(s.x0 + 3 + i * 3, s.x0 + 5 + i * 3, s.h, s.h + 1)} class="plant" />)}
-          <text x={s.x0 + 0.4} y={Y(s.h - 0.7)} class="room">{s.id === 'cloud-ai' ? 'AI data centre' : 'Data centre'}</text>
-        </>
-      ) : (
-        <>
-          <rect {...box(s.x0, s.x1, 0, s.h)} class="shell" />
-          <rect {...box(s.x0, s.x1, 4.2 - SLAB, 4.2)} class="slab" />
-          <rect {...box(PLACES['third-party'].x - 0.3, PLACES['third-party'].x + 0.3, 0, 2.0)} class="rack" />
-          <text x={s.x0 + 0.4} y={Y(s.h - 0.7)} class="room">Their office</text>
-        </>
-      )}
+      <g class="lot">
+        <polygon points={s.lot.top} class="top" /><polygon points={s.lot.right} class="side" /><polygon points={s.lot.left} class="side" />
+        <polygon points={s.lot.outline} class="outline thin-outline" />
+      </g>
+      {s.guides.map((g) => <polyline points={g} class="guide" />)}
+      <g class="floor">
+        <polygon points={s.floor.top} class="top" /><polygon points={s.floor.right} class="side" /><polygon points={s.floor.left} class="side" />
+        <polygon points={s.floor.outline} class="outline" />
+        {s.items.map((it) => it.kind === 'wall'
+          ? <g class="wall"><polygon points={it.w.face} /><polyline points={it.w.top} class="wall-top" /></g>
+          : <g class:list={['box', it.cls]}><polygon points={it.b.top} /><polygon points={it.b.right} /><polygon points={it.b.left} /></g>)}
+      </g>
+      <text class="plate-label" transform={`translate(${s.label.at[0]} ${s.label.at[1]}) rotate(30)`}>{s.name}</text>
     </g>
   ))}
 
-  <!-- Cables: the event's route and the camera's. -->
-  {RUNS.map((r) => <polyline points={pts(r.points)} class:list={['run', r.stream, r.only && `only-${r.only}`, route && r.stream === 'event' && 'lit']} />)}
+  <!-- Routes: solid along a floor or a duct, dotted where they drop. -->
+  {segments.map((s) => (
+    <polyline points={pts([s.a, s.b])}
+              class:list={['run', s.run.stream, s.drop && 'drop', s.run.only && `only-${s.run.only}`, route && s.run.stream === 'event' && 'lit']} />
+  ))}
+  <text class="note" transform={`translate(${ductLabel[0]} ${ductLabel[1] - 0.5}) rotate(30)`}>Buried duct</text>
 
-  <!-- Breaks in the ground: the sites are kilometres apart, not metres. -->
-  {BREAKS.map((x) => (
+  <!-- Breaks in the ducts: the sites are kilometres apart, not metres. -->
+  {breaks.map((b) => (
     <g class="break">
-      <rect x={x - 0.45} y={Y(0.5)} width={0.9} height={0.5 - EXTENT.z0} class="gap" />
-      <polyline points={pts(zig(x - 0.45))} />
-      <polyline points={pts(zig(x + 0.45))} />
-      <text x={x + 0.8} y={Y(DUCT.deep - 1.4)} class="note">Kilometres apart</text>
+      <polyline points={b.gap} class="gap" />
+      <polyline points={b.left} /><polyline points={b.right} />
+      <text x={b.label[0]} y={b.label[1] + 0.9} class="note">Kilometres apart</text>
     </g>
   ))}
 
-  <!-- The property line: the heaviest line in the drawing. -->
-  <rect {...box(PROPERTY.x0, PROPERTY.x1, PROPERTY.z0, PROPERTY.z1)} class="property" />
-  <text x={PROPERTY.x0 + 0.2} y={Y(PROPERTY.z1) - 0.3} class="property-label">Property line</text>
+  <!-- Labels, each with a leader to what it names. -->
+  {labels.map((l) => (
+    <g class="tag">
+      {/* The rack's three units share one leader, from the top label, so the
+          leaders do not cross the other labels. */}
+      {(!l.compact || l.id === 'head-end') && <polyline points={`${l.a[0]},${l.a[1]} ${l.l[0] - 0.2},${l.l[1] - 0.2}`} class="leader" />}
+      <text x={l.l[0]} y={l.l[1]} class:list={['label', l.compact && 'compact', l.id === 'recorder' && 'sensitive-text']}>{l.label}</text>
+      {!l.compact && <text x={l.l[0]} y={l.l[1] + 0.62} class="where">{l.where}</text>}
+    </g>
+  ))}
 
-  <!-- Components. -->
-  <g class="kit">
-    <rect {...box(0.03, 0.17, 1.1, 1.32)} />
-    <polyline points={pts([[1.0, ceiling(office[0])], [1.0, 3.5], [1.45, 3.4]])} class="thin" />
-    <polygon points={pts([[1.0, 3.55], [1.55, 3.48], [1.55, 3.3], [1.0, 3.38]])} class="sensitive-kit" />
-    <rect {...box(13.35, 14.05, 1.25, 1.95)} />
-    <rect {...box(RACK.x - RACK.w / 2, RACK.x + RACK.w / 2, RACK.z0, RACK.z0 + RACK.h)} />
-    {[PLACES['head-end'].z, PLACES['local-ai'].z, RECORDER.z].map((z) => (
-      <rect {...box(RACK.x - RACK.w / 2 + 0.05, RACK.x + RACK.w / 2 - 0.05, z - 0.09, z + 0.09)} class="unit" />
-    ))}
-    {(['cloud', 'cloud-ai', 'third-party'] as const).map((id) => (
-      <rect {...box(PLACES[id].x - 0.25, PLACES[id].x + 0.25, PLACES[id].z - 0.09, PLACES[id].z + 0.09)} class="unit" />
-    ))}
-  </g>
-
-  <!-- Labels. -->
-  {Object.entries(PLACES).map(([id, p]) => {
-    const right = p.side !== 'left';
-    const x = p.x + (right ? (id === 'head-end' || id === 'local-ai' ? RACK.w / 2 + 0.25 : 0.45) : -0.45);
-    const anchor = right ? 'start' : 'end';
-    return p.compact
-      ? <text x={x} y={Y(p.z) + 0.13} text-anchor={anchor} class="label compact">{p.label}</text>
-      : (
-        <g>
-          <text x={x} y={Y(p.z) - 0.05} text-anchor={anchor} class="label">{p.label}</text>
-          <text x={x} y={Y(p.z) + 0.46} text-anchor={anchor} class="where">{p.where}</text>
-        </g>
-      );
-  })}
-  <text x={RACK.x + RACK.w / 2 + 0.25} y={Y(RECORDER.z) + 0.13} class="label compact sensitive-text">{RECORDER.label}</text>
+  <!-- The stops, as rings on the route. -->
+  {stopAt.map((s) => <circle cx={s.a[0]} cy={s.a[1]} r={0.5} class="ring" />)}
 
   <!-- Whatever the page draws over the drawing: the trace's event, its
        route so far, the copies it leaves, the handoffs it crosses. -->
   <slot />
 
-  {stops && stopAt.map((s) => (
-    <g class="stop">
-      <circle cx={s.x} cy={Y(s.z)} r={0.32} />
-      <text x={s.x} y={Y(s.z) + 0.11} text-anchor="middle">{s.n}</text>
-    </g>
-  ))}
+  {stops && stopAt.map((s) => <text x={s.a[0]} y={s.a[1] + 0.16} text-anchor="middle" class="stop-n">{s.n}</text>)}
 </svg>
 
 <style>
   /* Every line keeps its screen width whatever the camera does. */
   .section { display: block; width: 100%; height: 100%; pointer-events: none; }
   .section :global(*) { vector-effect: non-scaling-stroke; }
+  .section polygon, .section polyline, .section circle { stroke-linejoin: round; }
 
-  .section line, .section polyline, .section rect, .section polygon, .section path, .section circle {
-    fill: none; stroke: var(--dse-drawing-heavy); stroke-width: 1;
-  }
-  .hatch { stroke: var(--dse-drawing) !important; stroke-width: .75 !important; }
-  .earth { stroke: none !important; }
-  .heavy { stroke: var(--ks-instrument-muted) !important; stroke-width: 1.25 !important; }
-  .slab { fill: oklch(100% 0 0 / 0.07) !important; stroke: var(--dse-drawing-heavy) !important; }
-  .wall, .shell { stroke: var(--ks-instrument-muted) !important; stroke-width: 1.5 !important; }
-  .leaf { stroke: var(--dse-drawing-heavy) !important; }
-  .riser { stroke: var(--dse-drawing-heavy) !important; stroke-dasharray: 1 2; }
-  .partition, .floor-line { stroke: var(--dse-drawing-heavy) !important; }
-  .rack { stroke: var(--dse-drawing-heavy) !important; fill: oklch(100% 0 0 / 0.04) !important; }
-  .plant { stroke: var(--dse-drawing-heavy) !important; }
-  .property { stroke: var(--dse-line) !important; stroke-width: 2 !important; stroke-dasharray: 10 4 2 4; }
-  /* A break cuts the ground: paper between two zig-zags. */
-  .break .gap { fill: var(--ks-instrument-deep) !important; stroke: none !important; }
-  .break polyline { stroke: var(--ks-instrument-muted) !important; }
+  /* Plates: an opaque top a shade above the ground, darker sides, and the
+     heavy outline the reference drawings use. */
+  .top { fill: oklch(21% 0 0); stroke: none; }
+  .side { fill: oklch(13% 0 0); stroke: none; }
+  .outline { fill: none; stroke: var(--ks-instrument-text); stroke-width: 2.6; }
+  .thin-outline { stroke-width: 1.6; stroke: var(--ks-instrument-muted); }
+  .lot .top { fill: oklch(15% 0 0); }
+  .property .outline { stroke: var(--dse-line); stroke-width: 2.6; stroke-dasharray: 10 4 2 4; }
+  .guide { fill: none; stroke: var(--ks-instrument-muted); stroke-width: 1; stroke-dasharray: 2 4; opacity: .7; }
 
-  /* Cables. The event's route is linework until the trace travels it. */
-  .run { stroke-linejoin: round; }
-  .run.event { stroke: var(--dse-drawing-heavy) !important; stroke-width: 1.25 !important; }
-  .run.event.lit { stroke: var(--dse-event) !important; stroke-opacity: .7; }
-  .run.sensitive { stroke: var(--dse-sensitive) !important; stroke-opacity: .55; stroke-dasharray: 2 2; }
+  /* Walls cut low, furniture and kit: opaque, so nearer things hide farther. */
+  .wall polygon { fill: oklch(25% 0 0); stroke: var(--dse-drawing-heavy); stroke-width: 1; }
+  .wall-top { fill: none; stroke: var(--ks-instrument-text); stroke-width: 1.6; }
+  .box polygon { fill: oklch(19% 0 0); stroke: var(--dse-drawing-heavy); stroke-width: 1; }
+  .box.kit polygon { fill: oklch(28% 0 0); stroke: var(--ks-instrument-text); stroke-opacity: .85; }
+  .box.rack polygon { fill: oklch(24% 0 0); stroke: var(--ks-instrument-muted); }
+  .box.sensitive-kit polygon { stroke: var(--dse-sensitive); stroke-opacity: 1; }
 
-  .kit rect, .kit polyline, .kit polygon { stroke: var(--ks-instrument-text) !important; stroke-opacity: .8; }
-  .kit .thin { stroke-opacity: .45; }
-  .kit .unit { fill: oklch(100% 0 0 / 0.14) !important; }
-  .kit .sensitive-kit { stroke: var(--dse-sensitive) !important; stroke-opacity: 1; }
+  /* Routes. The event's is linework until the trace travels it; drops between
+     floors are dotted, as in the reference. */
+  .run { fill: none; stroke-linecap: round; }
+  .run.event { stroke: var(--dse-drawing-heavy); stroke-width: 1.5; }
+  .run.event.lit { stroke: var(--dse-event); stroke-opacity: .75; stroke-width: 2.5; }
+  .run.sensitive { stroke: var(--dse-sensitive); stroke-opacity: .55; stroke-width: 1.25; stroke-dasharray: 2 3; }
+  .run.drop { stroke-dasharray: 1 4; }
+  .run.sensitive.drop { stroke-dasharray: 1 5; }
 
-  /* Type, in metres. At the trace's working zoom on a phone (31 px a metre)
-     a label is about 14 px and the smallest text about 10 px. */
+  .break .gap { fill: none; stroke: var(--ks-instrument-deep); stroke-width: 9; }
+  .break polyline:not(.gap) { fill: none; stroke: var(--ks-instrument-muted); stroke-width: 1; }
+
+  .ring { fill: var(--ks-instrument-deep); stroke: var(--ks-instrument-text); stroke-width: 2.2; }
+  .leader { fill: none; stroke: var(--ks-instrument-muted); stroke-width: 1; }
+
+  /* Type, in drawing units. At the trace's working zoom (about 23 units
+     across a phone's pixel per… 23 px a unit on a phone, 32 on a laptop) a
+     label is 14 to 20 px and the smallest text about 10. */
   .section text { fill: var(--ks-instrument-text); font-family: var(--ks-font), sans-serif; stroke: none; }
-  .label { font-size: .46px; font-weight: 600; }
-  /* The rack's units are 0.4 m apart: 0.36 m is as large as they can go. */
-  .label.compact { font-size: .36px; font-weight: 500; }
-  .where, .room, .floor, .note, .property-label {
+  .label { font-size: .62px; font-weight: 600; }
+  .label.compact { font-size: .5px; font-weight: 500; }
+  .where, .note, .plate-label, .stop-n {
     font-family: var(--ks-mono), monospace !important; letter-spacing: .06em;
     fill: var(--ks-instrument-muted) !important;
   }
-  .where { font-size: .34px; }
-  .room { font-size: .3px; text-transform: uppercase; }
-  .floor { font-size: .34px; text-transform: uppercase; }
-  .note { font-size: .3px; }
-  .property-label { font-size: .34px; text-transform: uppercase; fill: var(--ks-instrument-text) !important; }
+  .where { font-size: .44px; }
+  .note { font-size: .44px; }
+  .plate-label { font-size: .58px; text-transform: uppercase; fill: var(--ks-instrument-text) !important; }
+  .lot-label { fill: var(--dse-line) !important; }
   .sensitive-text { fill: var(--dse-sensitive) !important; }
-
-  .stop circle { fill: var(--ks-instrument-deep) !important; stroke: var(--dse-event) !important; stroke-width: 1.5 !important; }
-  .stop text { font-family: var(--ks-mono), monospace; font-size: .32px; fill: var(--dse-event) !important; }
+  .stop-n { font-size: .42px; fill: var(--dse-event) !important; }
 </style>

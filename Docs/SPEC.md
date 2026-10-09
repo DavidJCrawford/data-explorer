@@ -157,12 +157,12 @@ by a door event. A full-screen dark instrument.
 **Top bar.** Logo · `TRACE` · the title *Front entrance, 07:42* · the readout
 (`Hop 2 · Head-end · Comms room, level 2`) · ✕ back to the landing page.
 
-**Stage.** The section drawing, full bleed: a street-level cut through the
-office, the ground and the buildings the data reaches. A gold mark (the event)
-travels the cables from the reader, up the riser to the comms room, back down
-to the cable entry, under the property line and along buried ducts to a data
-centre, an AI data centre and the third party's office
-([decision](knowledge/decisions/underground-and-simpler.md)).
+**Stage.** The drawing, full bleed: an exploded isometric of the office, its
+three floors pulled apart, and the lots its data reaches. A gold mark (the
+event) travels from the reader across the ground floor, up the riser (dotted)
+to the comms room, back down and out through a buried duct under the property
+line to a data centre, an AI data centre and the third party's office
+([decisions](knowledge/decisions/exploded-isometric.md)).
 Small marks stay behind where copies were made. A red tick crosses the conduit
 at each seam, with the makers' letters either side. The camera frames the event
 set back from centre in its direction of travel. Background streams
@@ -214,7 +214,7 @@ navigation with the hop row already in place.
 the same cards and ledger. **No JavaScript.** The stops as a numbered
 document on paper, with the counts in a table.
 
-**Phone.** The camera's 12 m frame shows a building at a time. The ledger
+**Phone.** The camera's frame shows a floor at a time. The ledger
 becomes a bottom sheet with the count always visible, and cards are full width.
 
 ### 4.3 The rulebook
@@ -453,6 +453,7 @@ Update this list as work lands; log detail in [knowledge/log.md](knowledge/log.m
 
 **Refinement (David's method: iterate on the experience once the base is done)**
 - [x] Round 1, the trace: simpler building; cables underground to physical data centres and the third party's office ([decision](knowledge/decisions/underground-and-simpler.md))
+- [x] Round 2, the trace: an exploded isometric with heavy plate outlines and routes drawn like a circulation diagram, white on black ([decision](knowledge/decisions/exploded-isometric.md))
 
 **Phase 7: review and ship**
 - [x] Disclaimer on every legal surface, enforced by `verify` (§3.2.5)
