@@ -13,6 +13,9 @@
   /* A seam being crossed. The siblings' data red, which clears 3:1 on the
      instrument where vermilion does not. */
   --dse-seam:      var(--f1-corner);
+  /* The seam's letters (A→B) are text, and the data red reaches only 4.37:1
+     on the instrument; text needs 4.5. Lighter, same hue: 5.2:1. */
+  --dse-seam-text: oklch(64% 0.19 28);
   /* The property line: a drawn boundary, heavier than other linework. */
   --dse-line:      oklch(93% 0 0 / 0.45);
   /* The sensitive stream. Distinct from the event without competing with it.

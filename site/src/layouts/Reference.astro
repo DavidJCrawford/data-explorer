@@ -4,6 +4,9 @@
  *  an enhancement of, the ones that work without JavaScript, and the ones
  *  search engines and agents land on. Each carries the full disclaimer.
  *
+ *  Only these pages' bodies are indexed for search (`data-pagefind-body`):
+ *  the instruments and the landing page are not reference text.
+ *
  *  `crumbs` are the path back up; `jsonld` is this page's own structured
  *  data, added to the site-wide graph in Base. */
 import Base from '@layouts/Base.astro';
@@ -28,7 +31,7 @@ const { title, description, eyebrow, crumbs = [], jsonld } = Astro.props;
     )}
     {eyebrow && <p class="eyebrow">{eyebrow}</p>}
     <slot name="head" />
-    <div class="body"><slot /></div>
+    <div class="body" data-pagefind-body><slot /></div>
     <Disclaimer full class="foot" />
   </article>
 </Base>

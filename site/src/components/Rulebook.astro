@@ -19,9 +19,17 @@ const today = new Date().toISOString().slice(0, 10);
 const day = today < D.range.from ? D.range.from : today > D.range.to ? D.range.to : today;
 const span = (iso: string) => (Date.parse(iso) - Date.parse(D.range.from)) / (Date.parse(D.range.to) - Date.parse(D.range.from));
 const first = D.views[0];
+/* What a screen reader hears for a row, in place of the coloured cells. */
+const stateWords = (s: string) => (s === 'full' ? 'In force' : s === 'partial' ? 'Partly in force' : 'Not yet in force');
+const where = (cells: boolean[]) => {
+  const stops = cells.slice(0, -1).map((on, i) => (on ? i : -1)).filter((i) => i >= 0);
+  const parts = [stops.length ? `at stop${stops.length > 1 ? 's' : ''} ${stops.join(', ')}` : '', cells[cells.length - 1] ? 'alongside the path' : ''].filter(Boolean);
+  return parts.join(' and ') || 'at no stop';
+};
 const client = { range: D.range, dates: D.dates, views: D.views.map((v) => ({ id: v.id, rows: v.groups.flatMap((g) => g.rows.map((r) => ({ key: r.key, phases: r.phases }))) })) };
 ---
 <div class="rulebook instrument" data-rulebook data-j={first.id}>
+  <h1 class="visually-hidden">The rulebook: what the law says at each stop of the building’s data</h1>
   <header class="bar top">
     <div class="id">
       <a class="plain home" href={u('/')} aria-label="Data Explorer: home"><Logo size="20px" /></a>
@@ -65,6 +73,11 @@ const client = { range: D.range, dates: D.dates, views: D.views.map((v) => ({ id
                       <span class="statement">{r.label}</span>
                       <span class="mono cite">{r.cite}</span>
                       {r.kind !== 'absent' && <span class="when" data-when>{phaseLine(r.phases, day)}</span>}
+                      {r.kind !== 'absent' && (
+                        <span class="visually-hidden" data-said={r.cells.map((on, i) => (on ? (D.columns[i].n ?? 'alongside') : null)).filter((x) => x !== null).join(',')}>
+                          {stateWords(st.state)}, {where(r.cells)}.
+                        </span>
+                      )}
                     </span>
                     {r.cells.map((on, i) => (
                       <span class:list={['cell', D.columns[i].line && 'line', on && 'on']} aria-hidden="true"></span>

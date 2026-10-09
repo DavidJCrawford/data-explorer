@@ -16,6 +16,7 @@
  *    resizing cannot put the stop names in the wrong place.
  */
 import { along, type Pt } from '../lib/geometry';
+import { radioGroup } from './radiogroup';
 
 type Path = 'composite' | 'governed';
 interface Totals { copies: number; hands: number; seams: number; chosenHands: number; chosenSeams: number; handList: string[] }
@@ -231,6 +232,7 @@ function init(root: HTMLElement) {
     modal.querySelector('.modal-scroll')!.scrollTop = 0;
     // Classes after a forced reflow, never on the next frame (rAF can be frozen).
     void modal.offsetWidth;
+    modal.inert = false;
     modal.classList.add('on'); scrim.classList.add('on');
     modal.setAttribute('aria-hidden', 'false');
     (isEnd ? (endActions.querySelector('a, button') as HTMLElement | null) : go)?.focus({ preventScroll: true });
@@ -238,8 +240,13 @@ function init(root: HTMLElement) {
   }
   function hideCard() {
     clearTimeout(cardTimer); clearAuto();
+    // A closed card must not take keyboard focus while invisible; if focus
+    // was inside it, hand it to the play button rather than lose it.
+    const had = modal.contains(document.activeElement);
     modal.classList.remove('on'); scrim.classList.remove('on');
     modal.setAttribute('aria-hidden', 'true');
+    modal.inert = true;
+    if (had) playBtn.focus({ preventScroll: true });
   }
   const cardOpen = () => modal.classList.contains('on');
 
@@ -361,7 +368,8 @@ function init(root: HTMLElement) {
     if (!switched && hop > 0) { switched = true; note.hidden = false; }
     history.replaceState(null, '', `?hop=${hop}&path=${p}`);
   }
-  switchBtns.forEach((b) => b.addEventListener('click', () => setPath(b.dataset.setPath as Path)));
+  const syncSwitch = radioGroup(switchBtns, (b) => setPath(b.dataset.setPath as Path));
+  switchBtns.forEach((b) => b.addEventListener('click', () => { setPath(b.dataset.setPath as Path); syncSwitch(); }));
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && cardOpen() && mode !== 'finale') { hideCard(); mode = 'paused'; }
@@ -369,7 +377,7 @@ function init(root: HTMLElement) {
 
   /* ── Start: from the URL if it names a stop, else at the door. ── */
   const q = new URLSearchParams(location.search);
-  if (q.get('path') === 'governed') setPath('governed');
+  if (q.get('path') === 'governed') { setPath('governed'); syncSwitch(); }
   const start = Math.min(last, Math.max(0, Number(q.get('hop')) || 0));
   s = D.at[start];
   // Look along the leg about to be travelled (or the one just arrived by).

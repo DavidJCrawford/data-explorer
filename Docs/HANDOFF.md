@@ -1,6 +1,6 @@
 # HANDOFF — Data Explorer
 
-Written 2026-10-09 at the end of phase 1; updated after phases 2 to 6. Read [SPEC.md](SPEC.md) first; its §10
+Written 2026-10-09 at the end of phase 1; updated after phases 2 to 7. Read [SPEC.md](SPEC.md) first; its §10
 is the tracker. The content is the knowledge base in [knowledge/](knowledge/index.md).
 
 ## 0. Where this is up to
@@ -146,14 +146,32 @@ scripts/check_site.py        every internal link, unchanged from the siblings
   source once, leaving out background concepts (`on_site: false`) and the
   prototype (credited separately).
 
+- **Radio groups** (`scripts/radiogroup.ts`): both instruments' switches use
+  it. One tab stop, arrow keys select. A click handler must call the returned
+  sync function too, or the tab stop stays on the old button.
+- **`inert` on anything off screen or invisible**: the trace's closed card,
+  the rulebook's closed drawer on a phone. Without it a keyboard user tabs
+  into buttons they cannot see.
+- **Search indexes only `data-pagefind-body`**, which only the Reference
+  layout sets. The landing page and the instruments are not reference text.
+
 ## 3. Next
 
-Phase 7, review and ship (SPEC §10): the disclaimer check is already enforced;
-freshness re-check before promotion (the Digital Omnibus goes stale on
-31 December 2026); an accessibility pass; the Trends Report link once it is
-published; the companion article. Still owed from phase 4: reduced motion, a
-hidden tab and a real phone checked by hand, and the "building lies down"
-transition.
+All seven phases are built. What is left needs David, or a date:
+
+1. **The companion article** is drafted in the portfolio
+   (`src/content/articles/account-for-all-of-it.mdx`, `draft: true`, not
+   committed). Edit it, publish it, then add its link to the landing page's
+   "below the fold" line (SPEC §4.1).
+2. **The Trends Report link**, once it is published. The article concept is
+   also held out of /knowledge/ by `publish: false`; remove that line to
+   publish it there.
+3. **By 31 December 2026**: re-check the Digital Omnibus. The build fails on
+   that date until `stale_after` is moved.
+4. **By hand**: the trace on a real phone, with reduced motion on, and in a
+   background tab; a pass with a real screen reader.
+5. **Optional**: the "building lies down" transition from the trace's finale
+   into the rulebook (SPEC §4.2). The button works without it.
 
 The siblings' HANDOFF lessons apply throughout; SPEC §7 lists the ones that
 bite this project.

@@ -47,6 +47,7 @@ const client = {
 const pct = (s: number) => `${(100 * s / total).toFixed(3)}%`;
 ---
 <div class="trace instrument" data-trace data-path="composite" data-hop="0">
+  <h1 class="visually-hidden">The trace: one door event followed from the front entrance to the cloud</h1>
   <header class="bar top">
     <div class="id">
       <a class="plain home" href={u('/')} aria-label="Data Explorer: home"><Logo size="20px" /></a>
@@ -140,7 +141,7 @@ const pct = (s: number) => `${(100 * s / total).toFixed(3)}%`;
   </div>
 
   <div class="scrim" data-scrim></div>
-  <div class="modal" data-modal role="dialog" aria-labelledby="card-title-0" aria-hidden="true">
+  <div class="modal" data-modal role="dialog" aria-labelledby="card-title-0" aria-hidden="true" inert>
     <div class="modal-scroll">
       {D.cards.map((c) => (
         <article class="card" data-card={c.n} hidden>
@@ -271,7 +272,7 @@ const pct = (s: number) => `${(100 * s / total).toFixed(3)}%`;
   .stage :global(.seam.on) { opacity: 1; }
   .stage :global(.seam line) { stroke: var(--dse-seam) !important; stroke-width: 2.5 !important; }
   .stage :global(.seam.chosen line) { stroke: var(--dse-yours) !important; }
-  .stage :global(.seam text) { font-family: var(--ks-mono), monospace; font-size: .32px; fill: var(--dse-seam) !important; }
+  .stage :global(.seam text) { font-family: var(--ks-mono), monospace; font-size: .32px; fill: var(--dse-seam-text) !important; }
   .stage :global(.seam.chosen text) { fill: var(--dse-yours) !important; }
   .stage :global(.footage) { fill: var(--dse-sensitive) !important; stroke: none !important; opacity: 0; transition: opacity .3s; }
   .stage :global(.footage.on) { opacity: .95; }

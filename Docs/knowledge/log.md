@@ -1,6 +1,7 @@
 # Directory Update Log
 
 ## 2026-10-09
+* **Updated**: the [AI Act](law/wider-rulebook/ai-act.md) and [Digital Omnibus](law/wider-rulebook/digital-omnibus.md). The AI omnibus is Regulation (EU) 2026/1744, published in the Official Journal on 24 July 2026 (confirmed on EUR-Lex): high-risk duties from 2 December 2027, and from 2 August 2028 for AI in regulated products, now a phase of its own. The Data Act part is still not agreed.
 * **Added**: structured `actors` and `chapters` in [actors](law/eu-data-act/actors.md) and [chapters](law/eu-data-act/chapters.md), for the article pages; the build checks them against their tables and every article's `binds` and chapter against them.
 * **Published**: the bundle with the site at /knowledge/, with a manifest. [The article](thesis/the-article.md) carries `publish: false` and is held back until the Trends Report publishes it.
 * **Checked**: the four non-EU [jurisdictions](law/jurisdictions/index.md) against primary and official sources (SPEC §3.2.3) and rewritten. UK: smart data powers commenced 20 August 2025 (SI 2025/904); product security regime since 29 April 2024. New Zealand: banking designated 1 December 2025, electricity decided but not final (the first draft's 1 July 2027 was a planning date and is removed); IPP 3A in force since 1 May 2026. Australia: automated-decision transparency from 10 December 2026. United States: the CCPA has covered employee and business data since 1 January 2023.

@@ -7,7 +7,7 @@ owner is owed.**
 - **Status:** phases 1 to 6 built and deployed 2026-10-09: the scaffold,
   with every check in §5 running, the landing page, the section drawing,
   the trace, the rulebook, and the reference pages and agent surfaces.
-  Phase 7 (review and ship) is what remains. §10 is the
+  Phase 7's review is done; what remains needs David (§10). §10 is the
   tracker; [HANDOFF.md](HANDOFF.md) is where it is up to.
 - **Content source:** [Docs/knowledge/](knowledge/index.md), an OKF v0.2
   bundle compiled from the prototype
@@ -446,12 +446,13 @@ Update this list as work lands; log detail in [knowledge/log.md](knowledge/log.m
 - [x] Sources page, its lists gathered from the concepts' `sources`
 - [x] llms.txt, index.md twin, raw bundle with manifest, JSON-LD, robots, sitemap
 - [x] Trace cards and rulebook link each article to its page
-- [ ] Search across the reference pages (Pagefind builds the index; there is no search box yet)
+- [x] Search across the reference pages: Pagefind indexes their bodies only; the box is on the Act's index
 
 **Phase 7: review and ship**
-- [ ] Disclaimer on every legal surface, enforced by `verify` (§3.2.5)
-- [ ] Add the Trends Report link once published (§9.7)
-- [ ] Freshness re-check (§3.2.4)
-- [ ] Accessibility pass (WCAG 2.2 AA, keyboard through the trace and rulebook)
-- [ ] Deploy
-- [ ] The companion article (§8), published on the portfolio
+- [x] Disclaimer on every legal surface, enforced by `verify` (§3.2.5)
+- [ ] Add the Trends Report link once published (§9.7) — David
+- [x] Freshness re-check (§3.2.4), 2026-10-09: the AI omnibus is law (Regulation (EU) 2026/1744, OJ 24 July 2026, confirmed on EUR-Lex); the Data Act part is still not agreed. Next re-check by 31 December 2026, when the Digital Omnibus concept goes stale and the build fails until it is done
+- [x] Accessibility pass (WCAG 2.2 AA): contrast of every token pair computed (one failure, the seam letters at 4.37:1, fixed with `--dse-seam-text` at 5.2:1); both switches are radio groups with one tab stop and arrow keys; the closed stop card and the phone's closed drawer are `inert`, and focus returns to Play; a heading on each instrument; each rulebook row says its state and stops in words for screen readers
+- [ ] Accessibility with a real screen reader, reduced motion and a real phone — needs a person
+- [x] Deploy
+- [ ] The companion article (§8): drafted in the portfolio as `src/content/articles/account-for-all-of-it.mdx`, `draft: true`, not committed — David to edit and publish; then link it from the landing page

@@ -7,6 +7,7 @@
  *  arriving, row by row. Nothing animates on its own.
  */
 import { stateOn, phaseLine, longDate, type Phase } from '../lib/phases';
+import { radioGroup } from './radiogroup';
 
 interface Data {
   range: { from: string; to: string };
@@ -50,6 +51,9 @@ function init(root: HTMLElement) {
       el.dataset.state = stateOn(r.phases, day).state;
       const when = el.querySelector('[data-when]');
       if (when) when.textContent = phaseLine(r.phases, day);
+      // Keep the words a screen reader hears in step with the colours.
+      const said = el.querySelector<HTMLElement>('[data-said]');
+      if (said) said.textContent = said.textContent!.replace(/^[^,]+/, ({ full: 'In force', partial: 'Partly in force', future: 'Not yet in force' } as Record<string, string>)[el.dataset.state]);
     }
     slider.value = String(toFrac(day));
     slider.setAttribute('aria-valuetext', longDate(day));
@@ -70,10 +74,19 @@ function init(root: HTMLElement) {
       drawer.classList.add('open');
       drawer.scrollTop = 0;
     }
+    inertDrawer();
   }
 
+  /* On a phone the drawer is a sheet off the bottom of the screen when
+     closed; it must not take keyboard focus there. */
+  const phone = matchMedia('(max-width: 760px)');
+  function inertDrawer() { drawer.inert = phone.matches && !drawer.classList.contains('open'); }
+  phone.addEventListener('change', inertDrawer);
+
   /* ── Controls ── */
-  $$('[data-set-j]').forEach((b) => b.addEventListener('click', () => { j = b.dataset.setJ!; render(); }));
+  const jBtns = $$<HTMLButtonElement>('[data-set-j]');
+  const syncJ = radioGroup(jBtns, (b) => { j = b.dataset.setJ!; render(); });
+  jBtns.forEach((b) => b.addEventListener('click', () => { j = b.dataset.setJ!; render(); syncJ(); }));
   slider.addEventListener('input', () => {
     // Snap to a date something comes into force when close to one, so the
     // milestones are easy to land on by hand.
@@ -90,8 +103,13 @@ function init(root: HTMLElement) {
   });
   $('[data-today]').addEventListener('click', () => { day = today; render(); });
   $$('[data-row]').forEach((r) => r.addEventListener('click', () => { chosen = true; select(r.dataset.row!); render(); }));
-  $('[data-close]').addEventListener('click', () => drawer.classList.remove('open'));
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') drawer.classList.remove('open'); });
+  const closeDrawer = () => {
+    const row = root.querySelector<HTMLElement>(`[data-view="${j}"] [data-row="${sel}"]`);
+    drawer.classList.remove('open'); inertDrawer();
+    if (phone.matches) row?.focus({ preventScroll: true });
+  };
+  $('[data-close]').addEventListener('click', closeDrawer);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && drawer.classList.contains('open')) closeDrawer(); });
 
   /* ── Start from the URL ── */
   const q = new URLSearchParams(location.search);
@@ -102,6 +120,7 @@ function init(root: HTMLElement) {
   sel = q.get('sel') ?? '';
   chosen = !!sel;
   render();
+  syncJ();
   // A link that names a row opens its detail, on a phone as well.
   if (q.get('sel')) select(sel);
 }

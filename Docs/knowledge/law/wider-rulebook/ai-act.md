@@ -13,11 +13,15 @@ legal_review: none
 phases:
   - { date: 2025-02-02, what: "prohibited practices apply" }
   - { date: 2026-08-02, what: "transparency duties apply" }
-  - { date: 2027-12-02, what: "high-risk duties apply (as deferred, May 2026 omnibus)" }
+  - { date: 2027-12-02, what: "high-risk duties apply (as deferred by Regulation (EU) 2026/1744)" }
+  - { date: 2028-08-02, what: "high-risk duties for AI in regulated products" }
 stale_after: "2027-04-01T00:00:00Z"
 generated: { by: claude-code/opus-5.5, at: "2026-10-09T00:00:00Z" }
 status: draft
 sources:
+  - id: omnibus
+    resource: "https://eur-lex.europa.eu/eli/reg/2026/1744/oj/eng"
+    title: "Regulation (EU) 2026/1744 (Digital Omnibus on AI), OJ 24 July 2026"
   - id: ai-act
     resource: "https://eur-lex.europa.eu/eli/reg/2024/1689/oj"
     title: "Regulation (EU) 2024/1689"
@@ -34,7 +38,7 @@ The EU's product-level AI law: obligations scale with risk, from outright prohib
 
 # For a facilities manager
 
-Emotion recognition in workplaces has been prohibited since February 2025 — an intelligent building must not infer how its occupants feel. Biometric identification and AI safety components in critical infrastructure sit in the high-risk class, with duties applying from 2 December 2027 (deferred from August 2026 by the May 2026 omnibus; AI embedded in regulated products follows in August 2028). Transparency duties — telling people an AI is watching or deciding — apply from August 2026.
+Emotion recognition in workplaces has been prohibited since February 2025 — an intelligent building must not infer how its occupants feel. Biometric identification and AI safety components in critical infrastructure sit in the high-risk class, with duties applying from 2 December 2027 (deferred from August 2026 by Regulation (EU) 2026/1744; AI embedded in regulated products follows on 2 August 2028). Transparency duties — telling people an AI is watching or deciding — have applied since 2 August 2026.
 
 # The ask
 
@@ -46,13 +50,17 @@ Emotion recognition in workplaces has been prohibited since February 2025 — an
 | --- | --- |
 | 2025-02-02 | prohibited practices apply |
 | 2026-08-02 | transparency duties apply |
-| 2027-12-02 | high-risk duties apply (as deferred, May 2026 omnibus) |
+| 2027-12-02 | high-risk duties apply (as deferred by Regulation (EU) 2026/1744) |
+| 2028-08-02 | high-risk duties for AI in regulated products |
 
 # Status on 2026-10-09
 
 - Prohibited practices have applied since 2 February 2025.
-- Transparency duties applied from 2 August 2026, and now apply.
-- High-risk duties are deferred to 2 December 2027 by the AI omnibus
-  (provisional agreement 7 May 2026). Formal adoption was reported in June
-  2026; confirm publication in the Official Journal before the site states it
-  as law. See [Digital Omnibus](/law/wider-rulebook/digital-omnibus.md).
+- Transparency duties have applied since 2 August 2026.
+- High-risk duties for standalone systems (Annex III, which includes
+  biometric identification) apply from 2 December 2027, and for AI built into
+  regulated products (Annex I) from 2 August 2028. Both were deferred by
+  Regulation (EU) 2026/1744, the Digital Omnibus on AI, published in the
+  Official Journal on 24 July 2026.[^omnibus] Checked on EUR-Lex 2026-10-09.
+
+[^omnibus]: Regulation (EU) 2026/1744

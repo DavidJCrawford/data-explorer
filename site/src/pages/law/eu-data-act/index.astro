@@ -24,6 +24,11 @@ const plain = (n: number) => section(A[n].body, 'Plain reading')[0] ?? '';
     <p class="sub">{overview.data.description}</p>
   </Fragment>
 
+  <div class="search" data-pagefind-ignore>
+    <label class="visually-hidden" for="act-search">Search the Act, the rights and the sources</label>
+    <div id="act-search"></div>
+  </div>
+
   {section(overview.body, 'Why it is the spine').map((p) => <p>{p}</p>)}
   <p><a href={u('/rulebook/')}>See it laid along the building in the rulebook</a>, or <a href={u('/trace/')}>follow a door event through it</a>.</p>
 
@@ -52,6 +57,20 @@ const plain = (n: number) => section(A[n].body, 'Plain reading')[0] ?? '';
   <p class="go"><a href={DATA_ACT_ELI} rel="noopener">The Regulation in the Official Journal</a> · <a href={kb('law/eu-data-act/overview')}>The overview in the knowledge base</a></p>
 </Reference>
 
+<link rel="stylesheet" href={u('/pagefind/pagefind-ui.css')} />
+<script is:inline define:vars={{ ui: u('/pagefind/pagefind-ui.js'), base: u('/') }}>
+  /* Pagefind's own UI, loaded from the index the build writes. Without
+     JavaScript the box is simply absent; the page below is the index. */
+  const s = document.createElement('script');
+  s.src = ui;
+  s.onload = () => new PagefindUI({ element: '#act-search', showSubResults: false, showImages: false, resetStyles: false,
+    translations: { placeholder: 'Search the Act, the rights and the sources' } });
+  document.head.append(s);
+</script>
+
 <style>
+  .search { margin: 0 0 1.8rem; --pagefind-ui-scale: .8; --pagefind-ui-primary: var(--ks-ink); --pagefind-ui-text: var(--ks-text);
+    --pagefind-ui-background: var(--ks-paper-raised); --pagefind-ui-border: var(--ks-gray-2); --pagefind-ui-tag: var(--ks-gray);
+    --pagefind-ui-border-radius: 8px; --pagefind-ui-font: inherit; }
   .muted { color: var(--ks-text-muted); font-size: var(--ks-type-small-size); }
 </style>

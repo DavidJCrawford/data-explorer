@@ -1,7 +1,7 @@
 ---
 type: Pending Amendment
 title: "The Digital Omnibus"
-description: "The Commission's proposal to amend the Data Act and fold in other data laws. Not agreed as of October 2026; the Act applies as written."
+description: "The Commission's proposal to amend the Data Act and fold in other data laws. Not agreed as of October 2026; the Act applies as written. The AI part is law."
 tags: [wider-rulebook, eu-data-act, pending, freshness]
 kind: proposal
 legal_review: none
@@ -9,6 +9,9 @@ generated: { by: claude-code/opus-5.5, at: "2026-10-09T00:00:00Z" }
 status: draft
 stale_after: "2026-12-31T00:00:00Z"
 sources:
+  - id: ai_omnibus
+    resource: "https://eur-lex.europa.eu/eli/reg/2026/1744/oj/eng"
+    title: "Regulation (EU) 2026/1744 (Digital Omnibus on AI), OJ 24 July 2026"
   - id: birdbird
     resource: "https://www.twobirds.com/en/insights/2025/eu-digital-omnibus-package-major-changes-to-the-data-act-proposed"
     title: "Bird & Bird: EU Digital Omnibus — major changes to the Data Act proposed"
@@ -30,14 +33,16 @@ sources:
 
 The Commission's Digital Omnibus (proposed November 2025) moved on two tracks.
 
-- **The AI track** amends the AI Act. Council and Parliament reached
-  provisional agreement on 7 May 2026, deferring high-risk duties to 2 December
-  2027.[^whitecase] See [AI Act](/law/wider-rulebook/ai-act.md).
+- **The AI track** amends the AI Act. Agreed on 7 May 2026,[^whitecase] it was
+  adopted as Regulation (EU) 2026/1744 and published in the Official Journal on
+  24 July 2026,[^ai_omnibus] deferring high-risk duties to 2 December 2027
+  (2 August 2028 for AI in regulated products). See [AI Act](/law/wider-rulebook/ai-act.md).
 - **The data track** amends the Data Act: cloud switching, trade-secret
   protection, public-sector access, and folding in the Data Governance Act and
   related rules.[^birdbird] As of September 2026 it is still in negotiation.
   Member States did not adopt a Council compromise before the summer break,
   and agreement is targeted for the end of 2026 at the earliest.[^mccann][^simmons]
+  Re-checked 2026-10-09: no agreement on this track found.
 
 # What the site does about it
 
@@ -56,6 +61,7 @@ passes its `stale_after` date, re-check before anything ships.
 - Chapter V narrowed to public emergencies.
 
 [^whitecase]: White & Case
+[^ai_omnibus]: Regulation (EU) 2026/1744
 [^birdbird]: Bird & Bird
 [^mccann]: McCann FitzGerald
 [^simmons]: Simmons & Simmons
