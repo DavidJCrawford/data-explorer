@@ -126,7 +126,7 @@ const stopAt = T.hops.map((h) => ({ n: h.n, ...PLACES[h.component] }));
   </g>
 
   <!-- Conduits. The event's route, the camera's, and the rest of the building. -->
-  {RUNS.map((r) => <polyline points={pts(r.points)} class:list={['run', r.stream, route && r.stream === 'event' && 'lit']} />)}
+  {RUNS.map((r) => <polyline points={pts(r.points)} class:list={['run', r.stream, r.only && `only-${r.only}`, route && r.stream === 'event' && 'lit']} />)}
 
   <!-- Components. -->
   <g class="kit">
@@ -174,6 +174,10 @@ const stopAt = T.hops.map((h) => ({ n: h.n, ...PLACES[h.component] }));
       );
   })}
   <text x={RACK.x + RACK.w / 2 + 0.25} y={Y(RECORDER.z) + 0.13} class="label compact sensitive-text">{RECORDER.label}</text>
+
+  <!-- Whatever the page draws over the drawing: the trace's event, its
+       route so far, the copies it leaves, the seams it crosses. -->
+  <slot />
 
   {stops && stopAt.map((s) => (
     <g class="stop">

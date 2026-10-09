@@ -1,0 +1,382 @@
+---
+/** The trace (SPEC §4.2): one door event followed from the reader to the
+ *  cloud through the section drawing, with the ledger beside it. The Longest
+ *  Journey's journey with the map replaced by a building and the boat by an
+ *  event.
+ *
+ *  Everything is rendered here at build time: the drawing, the marks for both
+ *  archetypes (copies, seams, the footage), every stop's card, the ledger's
+ *  frame. scripts/trace.ts only moves things and switches classes, from the
+ *  numbers in the JSON block below.
+ *
+ *  Without JavaScript the instrument is hidden and the trace reads as a
+ *  document: the whole drawing with numbered stops, then the cards in order
+ *  and the counts in a table. */
+import Section from '@components/Section.astro';
+import TraceCard from '@components/TraceCard.astro';
+import Logo from '@components/Logo.astro';
+import Disclaimer from '@components/Disclaimer.astro';
+import { traceData, PATHS } from '@lib/trace-data';
+import { u } from '@lib/url';
+import { kb } from '@lib/scope';
+import { SUBJECT } from '@lib/scope';
+import { words, Words } from '@lib/format';
+
+interface Props { rulebook?: string | null }
+const { rulebook = null } = Astro.props;
+
+const D = await traceData();
+const last = D.hops.length - 1;
+const total = D.at[D.at.length - 1];
+const ext = D.extent;
+const fullView: [number, number, number, number] = [ext.x, ext.y, ext.w, ext.h];
+const fin = { composite: D.paths.composite.totals[last], governed: D.paths.governed.totals[last] };
+
+/* The client gets only what it moves with. */
+const client = {
+  legs: D.legs.map((l) => ({ points: l.points, length: l.length, jump: l.jump })),
+  at: D.at, stops: D.stops, crossLeg: D.crossLeg, cross: D.cross, extent: D.extent,
+  hops: D.hops,
+  paths: Object.fromEntries(PATHS.map((p) => [p, {
+    totals: D.paths[p].totals, chain: D.paths[p].chain,
+    holders: D.cards.map((c) => c.holders[p]),
+  }])),
+  owed: D.cards.map((c) => c.rights.map((r) => r.statement)),
+  footage: { onSite: D.footage.onSite, beyond: D.footage.beyond },
+};
+const pct = (s: number) => `${(100 * s / total).toFixed(3)}%`;
+---
+<div class="trace instrument" data-trace data-path="composite" data-hop="0">
+  <header class="bar top">
+    <div class="id">
+      <a class="plain home" href={u('/')} aria-label="Data Explorer: home"><Logo size="20px" /></a>
+      <span class="mono">Trace</span>
+      <span class="title">{SUBJECT.event}</span>
+    </div>
+    <p class="readout mono num" data-readout aria-live="polite">Stop 0 · {D.hops[0].label}</p>
+    <a class="icon plain" href={u('/')} aria-label="Leave the trace">✕</a>
+  </header>
+
+  <div class="body">
+    <div class="stage" data-stage>
+      <Section viewBox={fullView} label="Section through the building, following a door event to the cloud">
+        <g class="overlay" aria-hidden="true">
+          {D.legs.map((_, i) => <polyline class="travelled" data-leg={i} points="" />)}
+          {PATHS.map((p) => D.paths[p].seams.map((s) => (
+            <g class:list={['seam', `only-${p}`, s.chosen && 'chosen']} data-n={s.n}>
+              <line x1={s.x - s.dy * 0.35} y1={s.y + s.dx * 0.35} x2={s.x + s.dy * 0.35} y2={s.y - s.dx * 0.35} />
+              <text x={s.x - s.dx * 0.55 + s.dy * 0.55} y={s.y - s.dy * 0.55 - s.dx * 0.55 + 0.1} text-anchor="middle">{s.from.join('+')}</text>
+              <text x={s.x + s.dx * 0.55 + s.dy * 0.55} y={s.y + s.dy * 0.55 - s.dx * 0.55 + 0.1} text-anchor="middle">{s.to.join('+')}</text>
+            </g>
+          )))}
+          {PATHS.map((p) => D.paths[p].copies.map((c) => (
+            <rect class:list={['copy', `only-${p}`]} data-n={c.n} x={c.x - 0.1} y={c.y - 0.1} width={0.2} height={0.2} />
+          )))}
+          <rect class="footage onsite" x={D.footage.recorder[0] - 0.62} y={D.footage.recorder[1] - 0.1} width={0.2} height={0.2} />
+          <rect class="footage beyond only-composite" x={D.footage.cloud[0] - 0.1} y={D.footage.cloud[1] - 0.1} width={0.2} height={0.2} />
+          <g class="footage stays only-governed" transform={`translate(${D.footage.crossAt[0]} ${D.footage.crossAt[1]})`}>
+            <line x1={-0.45} y1={0.35} x2={0.45} y2={0.35} />
+            <text x={-0.6} y={0.48} text-anchor="end">Footage stays on site</text>
+          </g>
+          <circle class="event-dot" data-event cx={D.stops[0].x} cy={D.stops[0].y} r={0.18} />
+        </g>
+      </Section>
+      <div class="tags" data-tags aria-hidden="true">
+        {D.hops.map((h) => <span class="tag" data-tag={h.n}><b>{h.n}</b> {h.label}</span>)}
+      </div>
+    </div>
+
+    <aside class="panel" aria-label="The ledger">
+      <section class="where">
+        <p class="mono" data-where-stop>Stop 0 · {D.hops[0].place}</p>
+        <p class="name" data-where-name>{D.cards[0].title}</p>
+        <p class="held"><span class="mono k">Held by</span> <span data-where-held>{D.cards[0].holders.composite}</span></p>
+      </section>
+
+      <section class="count" aria-label="The count so far">
+        <div class="fig"><p class="mono">Copies</p><p class="big num" data-copies>0</p><p class="sub num" data-copies-sub>&nbsp;</p></div>
+        <div class="fig"><p class="mono">Companies</p><p class="big num" data-hands>0</p><p class="sub num" data-hands-sub>&nbsp;</p></div>
+        <div class="fig"><p class="mono">Handoffs</p><p class="big num" data-seams>0</p><p class="sub num" data-seams-sub>&nbsp;</p></div>
+      </section>
+      <p class="note" data-note hidden>Same copies. Different hands.</p>
+
+      <section class="footage-line">
+        <p class="mono">Camera footage, the same moment</p>
+        <p data-footage>Not recorded yet.</p>
+      </section>
+
+      <section class="owed">
+        <p class="mono">Owed here</p>
+        <ul data-owed></ul>
+      </section>
+
+      <section class="chain">
+        <p class="mono">The chain so far</p>
+        <ol data-chain></ol>
+      </section>
+
+      <footer class="attrib">
+        <p>An illustrative building. The counts follow
+          <a href={kb('thesis/copies-and-hands')} rel="noopener">stated definitions</a>,
+          not a measured system.</p>
+        <Disclaimer />
+      </footer>
+    </aside>
+  </div>
+
+  <div class="bar controls">
+    <button class="icon wide" type="button" data-play aria-label="Play">▶</button>
+    <div class="progress" data-scrub role="slider" tabindex="0" aria-label="Position along the trace"
+         aria-valuemin="0" aria-valuemax={last} aria-valuenow="0" aria-valuetext={`Stop 0, ${D.hops[0].label}`}>
+      <div class="rail"><span data-progress></span></div>
+      {D.at.map((s, n) => <span class="tick" style={`left:${pct(s)}`} data-tick={n}></span>)}
+      <span class="thumb" data-thumb></span>
+    </div>
+    <div class="switch" role="radiogroup" aria-label="How the building's systems are built">
+      <button type="button" role="radio" aria-checked="true" data-set-path="composite">Several makers</button>
+      <button type="button" role="radio" aria-checked="false" data-set-path="governed">One maker</button>
+    </div>
+    <a class="ui sources plain" href={kb('building/the-trace')} rel="noopener">Sources</a>
+  </div>
+
+  <div class="scrim" data-scrim></div>
+  <div class="modal" data-modal role="dialog" aria-labelledby="card-title-0" aria-hidden="true">
+    <div class="modal-scroll">
+      {D.cards.map((c) => (
+        <article class="card" data-card={c.n} hidden>
+          <TraceCard card={c} intro={c.n === 0 ? D.intro : undefined} />
+        </article>
+      ))}
+      <article class="card" data-card="end" hidden>
+        <div class="end">
+          <p class="mono eyebrow">The whole path</p>
+          <h2 id="card-title-end" class="title">{Words(D.hops.length)} stops, {words(fin.composite.copies)} copies</h2>
+          <table class="totals num">
+            <thead><tr><th></th><th>Several makers</th><th>One maker</th></tr></thead>
+            <tbody>
+              <tr><th>Copies</th><td>{fin.composite.copies}</td><td>{fin.governed.copies}</td></tr>
+              <tr><th>Companies holding one</th><td>{fin.composite.hands} + {fin.composite.chosenHands} chosen</td><td>{fin.governed.hands} + {fin.governed.chosenHands} chosen</td></tr>
+              <tr><th>Handoffs</th><td>{fin.composite.seams} + {fin.composite.chosenSeams} chosen</td><td>{fin.governed.seams} + {fin.governed.chosenSeams} chosen</td></tr>
+              <tr><th>Camera footage</th><td>{D.footage.beyond.composite.copies} copies, leaves the site</td><td>{D.footage.beyond.governed.copies} copy, stays on site</td></tr>
+            </tbody>
+          </table>
+          <p class="closing">Advantage won’t go to whoever collects the most. It will go to whoever can account for all of it.</p>
+          <p class="mono">An illustrative building. The counts follow stated definitions.</p>
+        </div>
+      </article>
+    </div>
+    <div class="modal-foot">
+      <label class="auto">
+        <input type="checkbox" data-autoplay />
+        <span class="box" aria-hidden="true"></span>
+        <span class="mono">Autoplay</span>
+      </label>
+      <span class="end-actions" data-end-actions hidden>
+        {rulebook
+          ? <a class="go plain" href={rulebook}>See what the law says →</a>
+          : <span class="mono pending">The rulebook is being built</span>}
+        <button type="button" class="again" data-again>Start again</button>
+      </span>
+      <button type="button" class="go" data-go>Follow it →</button>
+    </div>
+    <span class="timer" data-timer><span data-timer-fill></span></span>
+  </div>
+
+  <script type="application/json" id="trace-data" set:html={JSON.stringify(client)} />
+</div>
+
+<noscript>
+  <style>.trace { display: none !important; } body.bare { overflow: auto !important; }</style>
+  <div class="nojs instrument">
+    <p class="mono">Trace · {SUBJECT.event}</p>
+    <h1>Following one door event</h1>
+    <div class="nojs-drawing"><Section stops route /></div>
+    <ol class="nojs-cards">
+      {D.cards.map((c) => <li><TraceCard card={c} intro={c.n === 0 ? D.intro : undefined} static /></li>)}
+    </ol>
+    <table class="totals num">
+      <thead><tr><th>After stop</th><th>Several makers: copies · companies · handoffs</th><th>One maker</th></tr></thead>
+      <tbody>
+        {D.hops.map((h) => {
+          const a = D.paths.composite.totals[h.n], b = D.paths.governed.totals[h.n];
+          return <tr><th>{h.n} {h.label}</th><td>{a.copies} · {a.hands} · {a.seams}</td><td>{b.copies} · {b.hands} · {b.seams}</td></tr>;
+        })}
+      </tbody>
+    </table>
+    <Disclaimer full />
+    <p><a href={u('/')}>Home</a></p>
+  </div>
+</noscript>
+
+<script>
+  import '../scripts/trace.ts';
+</script>
+
+<style>
+  .trace {
+    position: fixed; inset: 0; display: grid; grid-template-rows: auto 1fr auto;
+    background: var(--ks-instrument-deep); color: var(--ks-instrument-text);
+  }
+  /* One archetype at a time. */
+  .trace[data-path='composite'] :global(.only-governed),
+  .trace[data-path='governed'] :global(.only-composite) { display: none; }
+
+  .mono { font-family: var(--ks-mono), monospace; font-size: var(--ks-type-mono-size); letter-spacing: .12em; text-transform: uppercase; color: var(--ks-instrument-muted); margin: 0; }
+  p { margin: 0; }
+
+  /* ── Bars, after The Longest Journey's ── */
+  .bar { display: flex; align-items: center; gap: 16px; padding: 12px clamp(14px, 3vw, 28px); background: var(--ks-instrument-deep); }
+  .top { border-bottom: 1px solid var(--ks-instrument-rule); }
+  .controls { border-top: 1px solid var(--ks-instrument-rule); }
+  .id { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .id .title { font-weight: 600; font-size: var(--ks-type-title-size); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .readout { margin-left: auto; letter-spacing: .06em; text-transform: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .icon {
+    display: inline-grid; place-items: center; min-width: var(--ks-control-md); height: var(--ks-control-md);
+    background: transparent; color: var(--ks-instrument-text); font: inherit;
+    border: 1px solid var(--ks-instrument-rule); border-radius: var(--ks-radius-sm); cursor: pointer;
+    transition: border-color var(--ks-quick) var(--ks-ease), background var(--ks-quick) var(--ks-ease);
+  }
+  .icon:hover { border-color: var(--ks-instrument-muted); background: var(--ks-instrument); }
+  .icon.wide { min-width: 44px; }
+  .progress { position: relative; flex: 1; height: 28px; display: flex; align-items: center; cursor: pointer; touch-action: none; }
+  .progress:focus-visible { outline: 2px solid var(--ks-patina); outline-offset: 2px; }
+  .rail { width: 100%; height: 3px; border-radius: 3px; background: var(--ks-instrument-rule); overflow: hidden; }
+  .rail span { display: block; height: 100%; width: 0; background: var(--dse-event); }
+  .tick { position: absolute; top: 50%; width: 1px; height: 9px; margin-top: -4.5px; background: var(--ks-instrument-muted); pointer-events: none; }
+  .thumb { position: absolute; top: 50%; left: 0; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: var(--dse-event); pointer-events: none; }
+  .switch { display: inline-flex; border: 1px solid var(--ks-instrument-rule); border-radius: var(--ks-radius-pill); padding: 2px; }
+  .switch button {
+    font: inherit; font-size: var(--ks-type-ui-size); color: var(--ks-instrument-muted); background: transparent;
+    border: 0; border-radius: var(--ks-radius-pill); padding: 5px 12px; cursor: pointer; white-space: nowrap;
+    transition: background var(--ks-quick) var(--ks-ease), color var(--ks-quick) var(--ks-ease);
+  }
+  .switch button[aria-checked='true'] { background: var(--ks-instrument-raised); color: var(--ks-instrument-text); }
+  .switch button:focus-visible { outline: 2px solid var(--ks-patina); outline-offset: 1px; }
+  .sources { color: var(--ks-instrument-muted); letter-spacing: .08em; text-transform: uppercase; font-size: var(--ks-type-label-size); }
+  .sources:hover { color: var(--ks-instrument-text); }
+
+  /* ── The stage and the ledger ── */
+  .body { display: grid; grid-template-columns: minmax(0, 1fr) 360px; min-height: 0; }
+  .stage { position: relative; overflow: hidden; min-height: 0; }
+  .panel { border-left: 1px solid var(--ks-instrument-rule); overflow: auto; padding: 18px 20px 20px; display: grid; gap: 18px; align-content: start; }
+
+  .stage :global(.travelled) { fill: none !important; stroke: var(--dse-event) !important; stroke-width: 2 !important; stroke-linejoin: round; }
+  /* Not `.event`: the drawing's route lines carry that class as their stream. */
+  .stage :global(.event-dot) { fill: var(--dse-event) !important; stroke: var(--ks-instrument-deep) !important; stroke-width: 2 !important; }
+  .stage :global(.copy) { fill: var(--dse-event) !important; stroke: none !important; opacity: 0; transition: opacity .3s; }
+  .stage :global(.copy.on) { opacity: .9; }
+  .stage :global(.seam) { opacity: 0; transition: opacity .3s; }
+  .stage :global(.seam.on) { opacity: 1; }
+  .stage :global(.seam line) { stroke: var(--dse-seam) !important; stroke-width: 2.5 !important; }
+  .stage :global(.seam.chosen line) { stroke: var(--dse-yours) !important; }
+  .stage :global(.seam text) { font-family: var(--ks-mono), monospace; font-size: .32px; fill: var(--dse-seam) !important; }
+  .stage :global(.seam.chosen text) { fill: var(--dse-yours) !important; }
+  .stage :global(.footage) { fill: var(--dse-sensitive) !important; stroke: none !important; opacity: 0; transition: opacity .3s; }
+  .stage :global(.footage.on) { opacity: .95; }
+  .stage :global(.footage.stays line) { stroke: var(--dse-sensitive) !important; stroke-width: 2.5 !important; }
+  .stage :global(.footage.stays text) { font-family: var(--ks-mono), monospace; font-size: .3px; fill: var(--dse-sensitive) !important; }
+  .stage :global(.footage.stays.flash) { animation: flash 1.6s var(--ks-ease); }
+  @keyframes flash { 0%, 40% { opacity: 1; } 15% { opacity: .3; } 100% { opacity: .95; } }
+  /* The camera's footage run out of the building is drawn only once it has
+     happened, and only in the composite stack. */
+  .stage :global(.run.only-composite) { opacity: 0; transition: opacity .4s; }
+  .trace[data-footage='beyond'] .stage :global(.run.only-composite) { opacity: 1; }
+  /* Once recorded, the footage's route reads as clearly as the event's. */
+  .trace:is([data-footage='onsite'], [data-footage='beyond']) .stage :global(.run.sensitive) { stroke-opacity: .95 !important; stroke-width: 1.75 !important; }
+
+  /* Stop names over the drawing when the camera is too far out to read its
+     own labels (the finale's overview). Positioned by the script. */
+  .tags { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity var(--ks-settle) var(--ks-ease); }
+  .tags.on { opacity: 1; }
+  .tag {
+    position: absolute; left: 0; top: 0; transform: translate(10px, -50%); white-space: nowrap;
+    font-size: var(--ks-type-label-size); color: var(--ks-instrument-text);
+    background: color-mix(in oklch, var(--ks-instrument-deep) 80%, transparent); padding: 1px 6px; border-radius: 3px;
+  }
+  .tag b { font-family: var(--ks-mono), monospace; color: var(--dse-event); font-weight: 500; margin-right: 4px; }
+
+  .where .name { font-weight: 600; font-size: var(--ks-type-title-lg-size); margin-top: 4px; line-height: 1.2; }
+  .held { margin-top: 6px; color: var(--ks-instrument-text); }
+  .held .k { margin-right: .4em; }
+  .count { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; border-block: 1px solid var(--ks-instrument-rule); padding-block: 12px; }
+  .big { font-family: var(--ks-font-display), sans-serif; font-weight: 300; font-size: 2.6rem; line-height: 1; margin-top: 4px; }
+  .sub { font-size: var(--ks-type-label-size); color: var(--ks-instrument-muted); margin-top: 4px; min-height: 1.3em; }
+  .num { font-variant-numeric: var(--f1-numeric); }
+  .note { color: var(--dse-event); font-weight: 600; }
+  .note[hidden] { display: none; }
+  .footage-line p:last-child { margin-top: 4px; color: var(--ks-instrument-text); }
+  .owed ul, .chain ol { margin: 6px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+  .owed li { line-height: 1.4; }
+  .chain li { font-size: var(--ks-type-small-size); color: var(--ks-instrument-muted); line-height: 1.4; }
+  .chain li b { color: var(--ks-instrument-text); font-weight: 500; }
+  .attrib { display: grid; gap: 8px; font-size: var(--ks-type-label-size); color: var(--ks-instrument-muted); border-top: 1px solid var(--ks-instrument-rule); padding-top: 12px; }
+  .attrib a { color: inherit; }
+
+  /* ── The stop cards ── */
+  .scrim { position: fixed; inset: 0; background: oklch(10% 0 0 / .45); opacity: 0; pointer-events: none; transition: opacity var(--ks-settle) var(--ks-ease); }
+  .scrim.on { opacity: 1; }
+  .modal {
+    position: fixed; left: 50%; top: 50%; width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 140px);
+    display: grid; grid-template-rows: minmax(0, 1fr) auto; transform: translate(-50%, -48%);
+    background: var(--ks-instrument); border: 1px solid var(--ks-instrument-rule); border-radius: var(--ks-radius-md);
+    box-shadow: 0 24px 64px oklch(0% 0 0 / .45); opacity: 0; pointer-events: none; overflow: hidden;
+    transition: opacity var(--ks-settle) var(--ks-ease), transform var(--ks-settle) var(--ks-ease);
+  }
+  .modal.on { opacity: 1; transform: translate(-50%, -50%); pointer-events: auto; }
+  .modal-scroll { overflow: auto; padding: 24px 26px 8px; }
+  .modal-foot { display: flex; align-items: center; gap: 12px; padding: 14px 26px 18px; flex-wrap: wrap; }
+  .modal-foot .go, .modal-foot .again {
+    margin-left: auto; font: inherit; font-size: var(--ks-type-ui-size); letter-spacing: .04em; cursor: pointer;
+    background: var(--ks-instrument-text); color: var(--ks-instrument-deep); border: 0; border-radius: var(--ks-radius-pill); padding: 9px 18px;
+  }
+  .modal-foot .again { background: transparent; color: var(--ks-instrument-text); border: 1px solid var(--ks-instrument-rule); margin-left: 0; }
+  .end-actions[hidden] { display: none; }
+  .end-actions { display: flex; gap: 10px; align-items: center; margin-left: auto; flex-wrap: wrap; }
+  .end-actions .go { margin-left: 0; }
+  .pending { text-transform: none; letter-spacing: .04em; }
+  .auto { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+  .auto input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .auto .box { width: 14px; height: 14px; border: 1px solid var(--ks-instrument-muted); border-radius: 3px; }
+  .auto input:checked + .box { background: var(--dse-event); border-color: var(--dse-event); }
+  .auto input:focus-visible + .box { outline: 2px solid var(--ks-patina); outline-offset: 2px; }
+  .timer { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; }
+  .timer span { display: block; height: 100%; width: 0; background: var(--dse-event); }
+  .end { display: grid; gap: .9rem; }
+  .end .title { font-family: var(--ks-font-display), sans-serif; font-weight: 300; font-size: clamp(1.9rem, 4vw, 2.6rem); line-height: 1.02; margin: 0; }
+  .eyebrow { margin: 0; }
+  .totals { width: 100%; border-collapse: collapse; font-size: var(--ks-type-small-size); }
+  .totals th, .totals td { text-align: left; padding: 6px 8px 6px 0; border-bottom: 1px solid var(--ks-instrument-rule); font-weight: 400; vertical-align: top; }
+  .totals thead th { color: var(--ks-instrument-muted); font-size: var(--ks-type-label-size); }
+  .closing { font-size: var(--ks-type-lead-size); line-height: 1.5; }
+
+  /* ── Phone ── */
+  @media (max-width: 760px) {
+    .body { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; }
+    .panel { border-left: 0; border-top: 1px solid var(--ks-instrument-rule); max-height: 30dvh; padding: 10px 16px 12px; gap: 10px; }
+    .owed, .chain, .footage-line { display: none; }
+    .where .name { font-size: var(--ks-type-title-size); }
+    .big { font-size: 1.9rem; }
+    .id .title { display: none; }
+    .controls { flex-wrap: wrap; gap: 10px 12px; padding-inline: 16px; }
+    .progress { order: -1; flex-basis: 100%; }
+    .switch { margin-right: auto; }
+    .modal { max-height: calc(100dvh - 96px); }
+    .modal-scroll { padding: 18px 18px 6px; }
+    .modal-foot { padding: 12px 18px 14px; }
+  }
+
+  /* ── Reduced motion: chrome changes state instantly; the script skips the
+        travel and the camera cuts. ── */
+  @media (prefers-reduced-motion: reduce) {
+    .modal, .scrim, .tags, .stage :global(.copy), .stage :global(.seam), .stage :global(.footage), .stage :global(.run.only-composite) { transition: none; }
+    .stage :global(.footage.stays.flash) { animation: none; }
+  }
+
+  /* ── No JavaScript: the trace as a document ── */
+  .nojs { padding: 24px 16px 48px; max-width: 760px; margin: 0 auto; background: var(--ks-instrument-deep); color: var(--ks-instrument-text); }
+  .nojs h1 { font-family: var(--ks-font-display), sans-serif; font-weight: 200; font-size: 2.6rem; margin: .2em 0 .6em; }
+  .nojs-drawing { height: 120vh; margin-bottom: 32px; }
+  .nojs-cards { margin: 0 0 32px; padding: 0; list-style: none; display: grid; gap: 32px; }
+  .nojs a { color: var(--ks-instrument-text); }
+</style>

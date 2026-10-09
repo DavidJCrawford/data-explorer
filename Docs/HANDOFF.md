@@ -1,6 +1,6 @@
 # HANDOFF — Data Explorer
 
-Written 2026-10-09 at the end of phase 1; updated after phases 2 and 3. Read [SPEC.md](SPEC.md) first; its §10
+Written 2026-10-09 at the end of phase 1; updated after phases 2, 3 and 4. Read [SPEC.md](SPEC.md) first; its §10
 is the tracker. The content is the knowledge base in [knowledge/](knowledge/index.md).
 
 ## 0. Where this is up to
@@ -9,8 +9,8 @@ is the tracker. The content is the knowledge base in [knowledge/](knowledge/inde
 https://davidjcrawford.github.io/data-explorer/ from
 `DavidJCrawford/data-explorer`. Pushing `main` deploys. The site builds from
 the knowledge base with every check in SPEC §5 running, and the one page is
-the landing page. Phase 3's section drawing is built but not yet on any
-published page; review it with `make drafts` at `/draft/section/`.
+the landing page and the trace at `/trace/`. The section drawing on its own
+is reviewed with `make drafts` at `/draft/section/`.
 
 ```bash
 make install   # npm ci in site/
@@ -89,13 +89,34 @@ scripts/check_site.py        every internal link, unchanged from the siblings
   create `/trace/` until it works: the landing page's button turns on the
   moment that file exists.
 
+- **The trace's state is one number**, `s`, metres along the route
+  (`scripts/trace.ts`). Position, stop, ledger and marks all follow from it
+  and the archetype, so scrubbing, switching and playing cannot disagree.
+- **Everything is rendered at build time** (`components/Trace.astro`,
+  `lib/trace-data.ts`): both archetypes' copy marks and seam ticks, the
+  footage marks, every card. The script toggles classes and moves the dot
+  and the camera. `.only-composite` / `.only-governed` hide the other
+  archetype's marks via `data-path` on the root.
+- **Do not give anything the class `event`.** The drawing's route lines carry
+  it as their stream; the moving dot is `.event-dot`. A style aimed at the
+  dot once filled every route gold.
+- **The URL is the state**: `?hop=3&path=governed` opens at that stop.
+  Applying the path before the first stop is drawn threw once; `setPath`
+  now returns early until a stop exists.
+- **The stop names over the drawing** (`.tags`) appear only when the camera is
+  too far out for the drawing's own labels (the finale), positioned from the
+  SVG's screen matrix.
+- **verify now checks the trace's prose tables too**: the spine (place, what
+  the event becomes) and what is owed at each stop, against the rights'
+  `attaches_to`. The second found "Share it" missing from the third party.
+
 ## 3. Next
 
-Phase 4, the trace (SPEC §4.2). It needs SPEC §3.2.1 and §3.2.2 settled
-first: the author's check of which articles attach at each hop, and someone
-who builds these systems arguing with the ledger's counts. Build it at
-`/draft/trace/` until it works, then move it to `/trace/`. Label legibility
-at the whole-drawing overview is unsolved; plan a level of detail.
+Phase 5, the rulebook (SPEC §4.3). The jurisdictions need checking against
+their primary legislation first (SPEC §3.2.3). When `/rulebook/` exists, the
+trace's finale button turns itself on. Still owed from phase 4: reduced
+motion, a hidden tab and a real phone checked by hand, and the "building lies
+down" transition.
 
 The siblings' HANDOFF lessons apply throughout; SPEC §7 lists the ones that
 bite this project.

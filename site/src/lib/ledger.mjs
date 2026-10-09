@@ -37,3 +37,22 @@ export function ledger(hops, path) {
   }
   return out;
 }
+
+/**
+ * What happens at each hop, for the ledger's "chain so far" and the seam
+ * ticks: the holders, the copies made, and whether the data changed hands
+ * on the way in (and from whom to whom).
+ * @param {Hop[]} hops @param {'composite'|'governed'} path
+ * @returns {{ n: number, holders: string[], made: number, seam: null | { from: string[], to: string[], chosen: boolean } }[]}
+ */
+export function steps(hops, path) {
+  return hops.map((hop, i) => {
+    const { holders, copies } = hop[path];
+    const prev = i > 0 ? hops[i - 1][path].holders : [];
+    const fresh = holders.filter((h) => !prev.includes(h));
+    return {
+      n: hop.n, holders, made: copies,
+      seam: i > 0 && fresh.length ? { from: prev, to: fresh, chosen: !!hop.by_right } : null,
+    };
+  });
+}

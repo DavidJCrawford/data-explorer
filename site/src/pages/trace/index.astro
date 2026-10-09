@@ -1,0 +1,14 @@
+---
+/** The trace (SPEC §4.2). A full-screen instrument, so the page frame's chrome
+ *  is off; components/Trace.astro carries its own bars and the disclaimer. */
+import Base from '@layouts/Base.astro';
+import Trace from '@components/Trace.astro';
+import { u } from '@lib/url';
+
+/* The finale offers the rulebook once phase 5 builds it. */
+const rulebook = Object.keys(import.meta.glob('../rulebook/index.astro')).length > 0 ? u('/rulebook/') : null;
+---
+<Base title="The trace" chrome={false}
+      description="One door event followed from the reader on the front door to the cloud: who holds it at each step, and what the owner is owed there.">
+  <Trace rulebook={rulebook} />
+</Base>

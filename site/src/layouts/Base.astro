@@ -21,7 +21,9 @@ const {
 
 /* Links are added as their pages land (SPEC §10), so the masthead never
    points at a page that does not exist; check_site would fail it anyway. */
-const NAV: { href: string; label: string }[] = [];
+const NAV: { href: string; label: string }[] = [
+  { href: '/trace/', label: 'Trace' },
+];
 const path = Astro.url.pathname;
 const AUTHOR_URL = 'https://davidjcrawford.github.io/';
 ---

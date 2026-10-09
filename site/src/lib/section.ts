@@ -108,12 +108,17 @@ export const RECORDER = { z: 8.75, label: 'Video recorder' };
  *  up into the ceiling void, along it, into the riser, up or down the riser.
  *  `lane` offsets runs that share the riser so they do not draw on top of
  *  each other. */
-export interface Run { from: string; to: string; points: [number, number][]; stream: 'event' | 'background' | 'sensitive' }
+export interface Run {
+  from: string; to: string; points: [number, number][];
+  stream: 'event' | 'background' | 'sensitive';
+  /** Drawn only in one archetype. */
+  only?: 'composite' | 'governed';
+}
 
 const g = FLOORS[0], l1 = FLOORS[1], l2 = FLOORS[2], l3 = FLOORS[3];
 /* Lanes in the riser, left to right. The event gets the one nearest the
    comms room so its path reads cleanly at the top. */
-const LANE = { sensors: 17.25, camera: 17.5, web: 17.75, meter: 18.0, event: 18.3 };
+export const LANE = { sensors: 17.25, camera: 17.5, web: 17.75, meter: 18.0, event: 18.3 };
 
 export const RUNS: Run[] = [
   /* The door event: the path the trace follows. */
@@ -127,6 +132,10 @@ export const RUNS: Run[] = [
      composite stack it then leaves with the event (phase 4 decides when it
      is drawn). */
   { from: 'camera', to: 'head-end', stream: 'sensitive', points: [[1.2, 3.45], [1.2, voidZ(g) - 0.15], [LANE.camera, voidZ(g) - 0.15], [LANE.camera, RECORDER.z], [21.5, RECORDER.z]] },
+
+  /* The footage leaving with the event: the composite stack only. In the
+     governed path it stops at the recorder (Docs/knowledge/thesis/leave-it-alone.md). */
+  { from: 'head-end', to: 'cloud', stream: 'sensitive', only: 'composite', points: [[21.8, RECORDER.z], [21.8, voidZ(l2) - 0.15], [LANE.camera, voidZ(l2) - 0.15], [LANE.camera, PROPERTY.z1], [LANE.camera, BREAK.z + 1.2], [13.6, 27.2], [13.6, 28.3]] },
 
   /* Everything else the building says, drawn quietly. */
   { from: 'occupancy', to: 'controller', stream: 'background', points: [[11, 7.2], [11, voidZ(l1)], [LANE.sensors, voidZ(l1)], [LANE.sensors, 1.75], [17.8, 1.75]] },

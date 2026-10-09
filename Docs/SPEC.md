@@ -4,9 +4,9 @@
 cloud and shows, at each step, who holds the data and what the building's
 owner is owed.**
 
-- **Status:** phases 1 to 3 built 2026-10-09: the scaffold, with every
-  check in §5 running, and the landing page (both deployed), and the
-  section drawing (local review only, `make drafts`). §10 is the
+- **Status:** phases 1 to 4 built and deployed 2026-10-09: the scaffold,
+  with every check in §5 running, the landing page, the section drawing,
+  and the trace at `/trace/`. §10 is the
   tracker; [HANDOFF.md](HANDOFF.md) is where it is up to.
 - **Content source:** [Docs/knowledge/](knowledge/index.md), an OKF v0.2
   bundle compiled from the prototype
@@ -419,14 +419,17 @@ Update this list as work lands; log detail in [knowledge/log.md](knowledge/log.m
 - [x] Review page at true size (`make drafts`, `/draft/section/`; never deployed)
 
 **Phase 4: the trace** (needs §3.2.1 and §3.2.2)
-- [ ] Event travel, braking, camera framing
-- [ ] The ledger, computed from the trace table
-- [ ] Stop cards, Autoplay, countdown
-- [ ] Archetype switch mid-trace
-- [ ] The sensitive stream
-- [ ] Finale; transition into the rulebook
-- [ ] Reduced-motion and no-JS forms; phone layout
-- [ ] Watch one full trace in a real browser
+- [x] §3.2.1 the author's check of the attachments; §3.2.2 counts confirmed by David
+- [x] Event travel, braking, camera framing
+- [x] The ledger, computed from the trace table
+- [x] Stop cards, Autoplay, countdown
+- [x] Archetype switch mid-trace
+- [x] The sensitive stream
+- [x] Finale (the rulebook button appears when phase 5 builds `/rulebook/`)
+- [ ] Finale transition "the building lies down" (target; ordinary navigation until then)
+- [x] Reduced-motion and no-JS forms written; phone layout checked at 375 px
+- [x] One full trace watched end to end with Autoplay in the app's browser pane (about 90 s, no stalls)
+- [ ] Reduced motion, a hidden tab, and a real phone checked by hand (not yet exercised)
 
 **Phase 5: the rulebook** (jurisdictions need §3.2.3)
 - [ ] Hops as columns, rights and instruments as bands

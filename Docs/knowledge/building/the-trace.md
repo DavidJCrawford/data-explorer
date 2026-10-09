@@ -19,14 +19,19 @@ parties:
   S: "The steward"
   R: "Recipient R, the owner's choice"
 hops:
-  - { n: 0, component: door, place: "Front entrance, ground floor", composite: { holders: [A], copies: 0 }, governed: { holders: [S], copies: 0 } }
-  - { n: 1, component: controller, place: "Riser cupboard, ground floor", composite: { holders: [B], copies: 1 }, governed: { holders: [S], copies: 1 } }
-  - { n: 2, component: head-end, place: "Comms room, level 2", composite: { holders: [C], copies: 1 }, governed: { holders: [S], copies: 1 } }
-  - { n: 3, component: cloud, place: "A data centre", crosses_property_line: true, composite: { holders: [C, D], copies: 2 }, governed: { holders: [S, D], copies: 2 } }
-  - { n: 4, component: cloud-ai, place: "A model provider", composite: { holders: [E], copies: 1 }, governed: { holders: [S, D], copies: 1 }, alternative: { governed: local-ai } }
-  - { n: 5, component: third-party, place: "Wherever the recipient is", by_right: true, composite: { holders: [R], copies: 1 }, governed: { holders: [R], copies: 1 } }
+  - { n: 0, component: door, place: "Front entrance, ground floor", becomes: "A credential read and a decision requested", composite: { holders: [A], copies: 0 }, governed: { holders: [S], copies: 0 } }
+  - { n: 1, component: controller, place: "Riser cupboard, ground floor", becomes: "A decision and a line in the controller's event log", composite: { holders: [B], copies: 1 }, governed: { holders: [S], copies: 1 } }
+  - { n: 2, component: head-end, place: "Comms room, level 2", becomes: "A row in the system of record, joined to a person and a tenancy", composite: { holders: [C], copies: 1 }, governed: { holders: [S], copies: 1 } }
+  - { n: 3, component: cloud, place: "A data centre", becomes: "A replica, and a backup of the replica", crosses_property_line: true, composite: { holders: [C, D], copies: 2 }, governed: { holders: [S, D], copies: 2 } }
+  - { n: 4, component: cloud-ai, place: "A model provider", becomes: "A model input, possibly training data", composite: { holders: [E], copies: 1 }, governed: { holders: [S, D], copies: 1 }, alternative: { governed: local-ai } }
+  - { n: 5, component: third-party, place: "Wherever the recipient is", becomes: "A copy delivered at the owner's request", by_right: true, composite: { holders: [R], copies: 1 }, governed: { holders: [R], copies: 1 } }
 sensitive:
   component: camera
+  # While the footage is still inside the building, and once it has gone as
+  # far as it goes.
+  on_site:
+    composite: { holders: [C], copies: 1 }
+    governed: { holders: [], copies: 1 }
   composite: { holders: [C, D], copies: 2, leaves_site: true }
   governed: { holders: [], copies: 1, leaves_site: false }
 sources:
@@ -138,6 +143,29 @@ path shows [Local AI](/building/components/local-ai.md) as the alternative:
 the model runs in the comms room, the event never crosses the property line
 for it, and the ledger would stop at 2 · 1 · 0 after hop 2. The card says
 that in words; the ledger does not switch to it.
+
+# The author's check of the attachments
+
+SPEC §3.2.1, done 2026-10-09 against the Official Journal text, as the
+author's own reading (no lawyer has reviewed it):
+
+- **Reader and controller** are parts of a connected product: Article 3
+  (design, for products placed on the market since 12 September 2026) and
+  Article 4 (access) attach.
+- **The head-end** is read here as a *related service*: software without
+  which the access-control product would lose functions. That brings its event
+  log within Article 4, and Article 43 stops it being claimed as a protected
+  database. A narrower reading would treat on-premises software as part of
+  the product; the owner's rights at this stop are the same either way.
+- **The cloud service** is a *data processing service* as well as a related
+  service, so Chapter VI (switching) and Articles 28 and 32 (jurisdiction and
+  foreign access) attach there and nowhere inside the building.
+- **The third party** receives under Article 5 and is bound by Article 6.
+  The "Share it" right now lists the third party among the places it applies;
+  it had not, though this table already said it did.
+
+The counts were confirmed by David, who works on these systems, on the same
+day (SPEC §3.2.2).
 
 # Status
 

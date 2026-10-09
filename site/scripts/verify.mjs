@@ -151,7 +151,7 @@ function verifyBundle() {
   }
   for (const c of instruments.values()) for (const id of c.data.attaches_to ?? []) needComponent(c, id, 'attaches_to');
 
-  verifyTrace(concepts.get('building/the-trace'), components);
+  verifyTrace(concepts.get('building/the-trace'), components, rights);
   verifyMilestones(concepts.get('law/eu-data-act/milestones'), articles);
 }
 
@@ -172,7 +172,7 @@ function verifyMilestones(m, articles) {
 
 /** The ledger recomputed from the trace's model, compared with the totals
  *  written by hand in its body. Either can be wrong; they cannot both be. */
-function verifyTrace(t, components) {
+function verifyTrace(t, components, rights) {
   if (!t) return fail('building/the-trace.md', 'missing');
   const { hops, parties, sensitive } = t.data;
   hops.forEach((h, i) => {
@@ -202,6 +202,26 @@ function verifyTrace(t, components) {
       const wanted = [c.copies, c.hands, c.seams, c.chosenHands, c.chosenSeams];
       if (written.join() !== wanted.join()) fail(t.rel, `after hop ${n}, ${p}: table says ${written}, the model gives ${wanted} (copies, hands, seams, chosen hands, chosen seams)`);
     });
+  }
+
+  // The spine table: each hop's place and what the event becomes there, as a
+  // reader sees them, against the model the pages are built from.
+  const spine = t.body.split('# The spine')[1]?.split('\n# ')[0] ?? '';
+  const spineRows = [...spine.matchAll(/^\| (\d) \| [^|]+\| ([^|]+?) \| ([^|]+?) \|/gm)];
+  if (spineRows.length !== hops.length) fail(t.rel, `the spine table has ${spineRows.length} rows for ${hops.length} hops`);
+  for (const [, n, place, becomes] of spineRows) {
+    const h = hops[Number(n)];
+    if (h && (h.place !== place || h.becomes !== becomes)) fail(t.rel, `hop ${n}: the spine table says “${place}” / “${becomes}”, the model “${h.place}” / “${h.becomes}”`);
+  }
+
+  // What the owner is owed at each hop: the table must list exactly the rights
+  // whose attaches_to names the hop's component.
+  const owed = t.body.split('# What the owner is owed at each hop')[1]?.split('\n# ')[0] ?? '';
+  for (const [, n, cell] of owed.matchAll(/^\| (\d) [^|]+\|([^|]+)\|/gm)) {
+    const listed = [...cell.matchAll(/\/rights\/([a-z-]+)\.md/g)].map((m) => m[1]).sort();
+    const component = hops[Number(n)]?.component;
+    const attached = rights.filter((r) => (r.data.attaches_to ?? []).includes(component)).map((r) => r.rel.replace(/^rights\/|\.md$/g, '')).sort();
+    if (listed.join() !== attached.join()) fail(t.rel, `hop ${n}: the owed table lists [${listed}] but the rights attached to ${component} are [${attached}]`);
   }
 
   // The sensitive stream's table.

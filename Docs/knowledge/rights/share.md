@@ -6,7 +6,7 @@ tags: ["right", "eu-data-act"]
 instrument: eu-data-act
 articles: [5, 6]
 applies_from: 2025-09-12
-attaches_to: ["cloud", "web-client"]
+attaches_to: ["cloud", "third-party", "web-client"]
 pairs_with: ["gdpr"]
 legal_review: none
 generated: { by: claude-code/opus-5.5, at: "2026-10-09T00:00:00Z" }
@@ -32,7 +32,7 @@ A rival analytics platform, an energy optimiser, your own consultant: you design
 
 # Where it lives in the building
 
-[cloud](/building/components/cloud.md), [web-client](/building/components/web-client.md)
+[cloud](/building/components/cloud.md), [third-party](/building/components/third-party.md), [web-client](/building/components/web-client.md)
 
 # The wider rulebook
 

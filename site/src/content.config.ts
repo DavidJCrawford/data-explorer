@@ -128,6 +128,7 @@ export const collections = {
         n: z.number().int(),
         component: z.string(),
         place: z.string(),
+        becomes: z.string(),
         by_right: z.boolean().optional(),
         crosses_property_line: z.boolean().optional(),
         alternative: z.record(z.string(), z.string()).optional(),
@@ -136,6 +137,10 @@ export const collections = {
       })),
       sensitive: z.object({
         component: z.string(),
+        on_site: z.object({
+          composite: z.object({ holders: ids, copies: z.number().int() }),
+          governed: z.object({ holders: ids, copies: z.number().int() }),
+        }),
         composite: z.object({ holders: ids, copies: z.number().int(), leaves_site: z.boolean() }),
         governed: z.object({ holders: ids, copies: z.number().int(), leaves_site: z.boolean() }),
       }),

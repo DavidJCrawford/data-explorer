@@ -1,0 +1,82 @@
+---
+/** One stop's card (SPEC §4.2 "Stops"): what this place is, what the event
+ *  becomes here, who holds it, what the owner is owed, and the one question to
+ *  ask. Used twice: as the dialog the trace fades in at each stop, and in the
+ *  no-JS reading, where the cards are the document.
+ *
+ *  Both archetypes' holders are rendered; the trace's `data-path` shows one.
+ *  Rights are in the second person by design (policies/editorial-voice.md). */
+import type { TraceData } from '@lib/trace-data';
+import { words } from '@lib/format';
+
+interface Props { card: TraceData['cards'][number]; intro?: string; static?: boolean }
+const { card: c, intro, static: isStatic = false } = Astro.props;
+const art = (ns: number[]) => ns.map((n) => `Art. ${n}`).join(' · ');
+---
+<div class="card-body">
+  <p class="mono eyebrow">Stop {c.n} · {c.place}</p>
+  <h2 id={isStatic ? undefined : `card-title-${c.n}`} class="title">{c.title}</h2>
+  {intro && <p class="intro">{intro}</p>}
+  <p class="becomes"><span class="mono k">Here it becomes</span> {c.becomes}.</p>
+  {c.line && <p class="line">{c.line}</p>}
+
+  <dl>
+    <div>
+      <dt class="mono">Held by</dt>
+      <dd>
+        <span class="only-composite">{c.holders.composite}</span>
+        <span class="only-governed">{c.holders.governed}</span>
+        {c.byRight && <span class="chosen"> — chosen by the owner</span>}
+      </dd>
+    </div>
+
+    {c.rights.length > 0 && (
+      <div>
+        <dt class="mono">Owed here</dt>
+        <dd>
+          <ul class="rights">
+            {c.rights.map((r) => <li><span class="statement">{r.statement}</span> <span class="mono arts">{art(r.articles)}</span></li>)}
+          </ul>
+        </dd>
+      </div>
+    )}
+
+    {c.ask && (
+      <div>
+        <dt class="mono">To ask · {c.ask.name}</dt>
+        <dd class="ask">{c.ask.ask}</dd>
+      </div>
+    )}
+  </dl>
+
+  {c.alternative && (
+    <aside class="alt only-governed">
+      <p class="mono">The other way: {c.alternative.title}</p>
+      <p>
+        {c.alternative.line} Run on site, the model comes to the data and the event never crosses the
+        property line for it: the ledger would stop at {words(c.alternative.totals.copies)} copies,
+        {words(c.alternative.totals.hands)} company and no changes of hands.
+      </p>
+    </aside>
+  )}
+</div>
+
+<style>
+  .card-body { display: grid; gap: .7rem; }
+  .mono { font-family: var(--ks-mono), monospace; font-size: var(--ks-type-mono-size); letter-spacing: .12em; text-transform: uppercase; color: var(--ks-instrument-muted); margin: 0; }
+  .title { font-family: var(--ks-font-display), sans-serif; font-weight: 300; font-size: clamp(1.9rem, 4vw, 2.6rem); line-height: 1.02; color: var(--ks-instrument-text); margin: 0; }
+  p { margin: 0; }
+  .intro { font-size: var(--ks-type-lead-size); line-height: 1.55; color: var(--ks-instrument-text); }
+  .becomes { font-size: var(--ks-type-lead-size); line-height: 1.5; color: var(--ks-instrument-text); }
+  .becomes .k { margin-right: .4em; color: var(--dse-event); }
+  .line { color: var(--ks-instrument-muted); line-height: 1.55; }
+  dl { margin: .3rem 0 0; display: grid; gap: .8rem; }
+  dt { margin-bottom: .25rem; }
+  dd { margin: 0; line-height: 1.5; }
+  .chosen { color: var(--dse-yours); }
+  .rights { list-style: none; margin: 0; padding: 0; display: grid; gap: .35rem; }
+  .rights .statement { color: var(--ks-instrument-text); }
+  .rights .arts { white-space: nowrap; color: var(--dse-event); letter-spacing: .06em; }
+  .ask { color: var(--ks-instrument-text); }
+  .alt { border-top: 1px solid var(--ks-instrument-rule); padding-top: .8rem; display: grid; gap: .35rem; color: var(--ks-instrument-muted); line-height: 1.5; }
+</style>
