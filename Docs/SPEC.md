@@ -4,8 +4,9 @@
 cloud and shows, at each step, who holds the data and what the building's
 owner is owed.**
 
-- **Status:** phases 1 and 2 built and deployed 2026-10-09: the scaffold,
-  with every check in §5 running, and the landing page. §10 is the
+- **Status:** phases 1 to 3 built 2026-10-09: the scaffold, with every
+  check in §5 running, and the landing page (both deployed), and the
+  section drawing (local review only, `make drafts`). §10 is the
   tracker; [HANDOFF.md](HANDOFF.md) is where it is up to.
 - **Content source:** [Docs/knowledge/](knowledge/index.md), an OKF v0.2
   bundle compiled from the prototype
@@ -412,9 +413,10 @@ Update this list as work lands; log detail in [knowledge/log.md](knowledge/log.m
 - [ ] Long-form article link, once the article exists (§8)
 
 **Phase 3: the section drawing**
-- [ ] Block out the section at real proportions, phone and laptop (§7)
-- [ ] Build-time SVG from the building model: floors, riser, comms room, property line, cloud, third party
-- [ ] Component symbols, conduits, labels
+- [x] Block out the section at real proportions, phone and laptop (§7)
+- [x] Build-time SVG from the building model: floors, riser, comms room, property line, cloud, third party
+- [x] Component symbols, conduits, labels
+- [x] Review page at true size (`make drafts`, `/draft/section/`; never deployed)
 
 **Phase 4: the trace** (needs §3.2.1 and §3.2.2)
 - [ ] Event travel, braking, camera framing

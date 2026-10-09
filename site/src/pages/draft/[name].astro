@@ -1,0 +1,90 @@
+---
+/** Review pages for work in progress, built only when DRAFTS=1.
+ *
+ *  Phase 3's section drawing needs reviewing before the trace exists, and
+ *  creating /trace/ would switch the landing page's button on. So drafts live
+ *  here instead: `DRAFTS=1 npm run build` builds them, CI never sets it, and
+ *  they never reach the published site.
+ *
+ *  /draft/section/ shows the whole drawing, and each stop framed as the
+ *  trace's camera will frame it: on a phone held upright, and in the laptop
+ *  stage beside the ledger (SPEC §7: check the composition before the detail). */
+import type { GetStaticPaths } from 'astro';
+import Base from '@layouts/Base.astro';
+import Section from '@components/Section.astro';
+import Disclaimer from '@components/Disclaimer.astro';
+import { trace } from '@lib/knowledge';
+import { PLACES, Y } from '@lib/section';
+
+export const getStaticPaths = (() =>
+  process.env.DRAFTS === '1' ? [{ params: { name: 'section' } }] : []) satisfies GetStaticPaths;
+
+const T = await trace();
+/* Working zooms, in metres of drawing across the frame. A phone at 375 px
+   shows 12 m (about 31 px a metre); the laptop stage, 1080 by 700 px beside
+   a 360 px ledger, shows 24 m (45 px a metre). */
+const PHONE = { w: 12, h: 12 * 16 / 9 };
+const LAPTOP = { w: 24, h: 24 * 700 / 1080 };
+const frame = (x: number, z: number, f: { w: number; h: number }): [number, number, number, number] =>
+  [x - f.w / 2, Y(z) - f.h / 2, f.w, f.h];
+---
+<Base title="Draft: the section" chrome={false}>
+  <div class="draft instrument">
+    <header>
+      <p class="mono">Draft · phase 3 · not published</p>
+      <h1>The section</h1>
+      <Disclaimer />
+    </header>
+
+    <section class="whole">
+      <h2 class="mono">The whole drawing, with the event’s route and stops</h2>
+      <div class="frame whole-frame"><Section stops route /></div>
+    </section>
+
+    <section>
+      <h2 class="mono">At true size: the comms room on a 375 px phone, and in the 1080 px laptop stage</h2>
+      <div class="true">
+        <div class="frame phone-true"><Section viewBox={frame(PLACES['head-end'].x, PLACES['head-end'].z, PHONE)} route /></div>
+        <div class="frame laptop-true"><Section viewBox={frame(PLACES['head-end'].x, PLACES['head-end'].z, LAPTOP)} route /></div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="mono">Each stop as the camera will frame it</h2>
+      <div class="frames">
+        {T.hops.map((h) => {
+          const p = PLACES[h.component];
+          return (
+            <figure>
+              <figcaption class="mono">{h.n} · {p.label}</figcaption>
+              <div class="pair">
+                <div class="frame phone"><Section viewBox={frame(p.x, p.z, PHONE)} route /></div>
+                <div class="frame laptop"><Section viewBox={frame(p.x, p.z, LAPTOP)} route /></div>
+              </div>
+            </figure>
+          );
+        })}
+      </div>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .draft { min-height: 100dvh; overflow: auto; padding: 24px clamp(16px, 3vw, 32px) 64px; background: var(--ks-instrument-deep); color: var(--ks-instrument-text); }
+  :global(body.bare) { overflow: auto !important; }
+  header { margin-bottom: 24px; }
+  h1 { font-family: var(--ks-font-display), sans-serif; font-weight: 200; font-size: 3rem; margin: .1em 0 .2em; }
+  h2 { font-size: var(--ks-type-mono-size); color: var(--ks-instrument-muted); letter-spacing: .12em; text-transform: uppercase; margin: 32px 0 12px; }
+  .mono { font-family: var(--ks-mono), monospace; font-size: var(--ks-type-mono-size); letter-spacing: .12em; text-transform: uppercase; color: var(--ks-instrument-muted); margin: 0; }
+  .frame { border: 1px solid var(--ks-instrument-rule); background: var(--ks-instrument-deep); }
+  .whole-frame { height: min(92vh, 1100px); }
+  .frames { display: grid; grid-template-columns: repeat(auto-fill, minmax(560px, 1fr)); gap: 28px; }
+  figure { margin: 0; }
+  figcaption { margin-bottom: 8px; }
+  .pair { display: grid; grid-template-columns: 180px 1fr; gap: 12px; align-items: start; }
+  .phone { width: 180px; aspect-ratio: 9 / 16; }
+  .laptop { aspect-ratio: 1080 / 700; }
+  .true { display: flex; gap: 24px; align-items: start; overflow-x: auto; }
+  .phone-true { flex: none; width: 375px; aspect-ratio: 9 / 16; }
+  .laptop-true { flex: none; width: 1080px; height: 700px; }
+</style>

@@ -1,6 +1,6 @@
 # HANDOFF — Data Explorer
 
-Written 2026-10-09 at the end of phase 1; updated after phase 2. Read [SPEC.md](SPEC.md) first; its §10
+Written 2026-10-09 at the end of phase 1; updated after phases 2 and 3. Read [SPEC.md](SPEC.md) first; its §10
 is the tracker. The content is the knowledge base in [knowledge/](knowledge/index.md).
 
 ## 0. Where this is up to
@@ -9,12 +9,14 @@ is the tracker. The content is the knowledge base in [knowledge/](knowledge/inde
 https://davidjcrawford.github.io/data-explorer/ from
 `DavidJCrawford/data-explorer`. Pushing `main` deploys. The site builds from
 the knowledge base with every check in SPEC §5 running, and the one page is
-the landing page.
+the landing page. Phase 3's section drawing is built but not yet on any
+published page; review it with `make drafts` at `/draft/section/`.
 
 ```bash
 make install   # npm ci in site/
 make verify    # the knowledge base: conformance, links, references, staleness, ledger
 make build     # verify → astro build → pagefind → verify --dist → check_site
+make drafts    # the same, plus local-only review pages under /draft/
 make preview   # serve dist; check against this, never astro dev
 make check     # astro check
 ```
@@ -78,11 +80,22 @@ scripts/check_site.py        every internal link, unchanged from the siblings
   set in the repository's own git config, so the public history does not name
   the author's employer.
 
+- **The section is in metres.** `lib/section.ts` holds the geometry and
+  `components/Section.astro` draws it; the camera will move by changing the
+  viewBox, which `Section` takes as a prop. Strokes are non-scaling, type is in
+  metres. `design/the-section-drawing.md` records why the data leaves upward
+  and why the scale break is there.
+- **Drafts never ship.** `/draft/[name]` has no paths unless `DRAFTS=1`. Do not
+  create `/trace/` until it works: the landing page's button turns on the
+  moment that file exists.
+
 ## 3. Next
 
-Phase 3, the section drawing (SPEC §4.2, `design/the-section-drawing.md`).
-Block out the section at real proportions on a phone and a laptop before
-drawing a single symbol (SPEC §7).
+Phase 4, the trace (SPEC §4.2). It needs SPEC §3.2.1 and §3.2.2 settled
+first: the author's check of which articles attach at each hop, and someone
+who builds these systems arguing with the ledger's counts. Build it at
+`/draft/trace/` until it works, then move it to `/trace/`. Label legibility
+at the whole-drawing overview is unsolved; plan a level of detail.
 
 The siblings' HANDOFF lessons apply throughout; SPEC §7 lists the ones that
 bite this project.

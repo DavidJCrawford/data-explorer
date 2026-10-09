@@ -60,3 +60,27 @@ totals.
 
 The prototype's node graph (force layout, goo hover, anchored components) and
 the living mini-graph of the Act. See [retire the node graph](/decisions/retire-the-node-graph.md).
+
+# As built (phase 3, 2026-10-09)
+
+The geometry lives in `site/src/lib/section.ts`, in metres; the drawing in
+`site/src/components/Section.astro`, rendered at build time.
+
+- **To scale inside the property line.** 28 m deep in section; 4.5 m ground
+  floor, 3.6 m upper floors, a 300 mm slab and a 600 mm ceiling void; a
+  hatched lift and stair core with the riser beside it; plant on the roof.
+- **Cables follow real routes**: up into the ceiling void, along it, into the
+  riser, up or down the riser. Runs that share the riser have their own lanes.
+- **The data leaves upward, and the drawing says that part is a diagram.** In
+  a real building the external connection usually enters underground. Drawing
+  it that way would send the event down and then up again. Instead the event
+  rises through the riser and out through the top of the property line, and
+  a scale break marked "Beyond this line, not to scale" sits between the
+  building and the cloud. Nothing above it is at a true size or distance.
+- **Working zoom**: 12 m across on a phone (about 31 px a metre), 24 m across
+  in the laptop stage (about 45 px a metre). Type is set in metres so it reads
+  at those zooms: labels 0.46 m, the smallest text 0.30 m. At the whole-drawing
+  overview, labels are too small to read; phase 4 handles that.
+- **Every component in the knowledge base must have a place in the drawing.**
+  The build fails if one does not.
+- **Review** at `/draft/section/`, built only by `make drafts`.
