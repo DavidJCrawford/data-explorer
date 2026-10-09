@@ -12,7 +12,7 @@ import { u } from '@lib/url';
 
 interface Props { card: TraceData['cards'][number]; intro?: string; static?: boolean }
 const { card: c, intro, static: isStatic = false } = Astro.props;
-const art = (ns: number[]) => ns.map((n) => `Art. ${n}`).join(' · ');
+const art = (ns: number[]) => ns.map((n) => ({ n, href: u(`/law/eu-data-act/article-${n}/`) }));
 ---
 <div class="card-body">
   <p class="mono eyebrow">Stop {c.n} · {c.place}</p>
@@ -36,7 +36,7 @@ const art = (ns: number[]) => ns.map((n) => `Art. ${n}`).join(' · ');
         <dt class="mono">Owed here</dt>
         <dd>
           <ul class="rights">
-            {c.rights.map((r) => <li><a class="statement plain" href={u(`/rulebook/?sel=${r.id}`)}>{r.statement}</a> <span class="mono arts">{art(r.articles)}</span></li>)}
+            {c.rights.map((r) => <li><a class="statement plain" href={u(`/rulebook/?sel=${r.id}`)}>{r.statement}</a> <span class="mono arts">{art(r.articles).map((a, i) => <>{i > 0 && ' · '}<a class="plain" href={a.href}>Art. {a.n}</a></>)}</span></li>)}
           </ul>
         </dd>
       </div>
@@ -79,6 +79,8 @@ const art = (ns: number[]) => ns.map((n) => `Art. ${n}`).join(' · ');
   .rights .statement { color: var(--ks-instrument-text); text-decoration: underline; text-decoration-color: var(--ks-instrument-rule); text-underline-offset: 3px; }
   .rights .statement:hover { text-decoration-color: var(--ks-instrument-text); }
   .rights .arts { white-space: nowrap; color: var(--dse-event); letter-spacing: .06em; }
+  .rights .arts a { color: inherit; }
+  .rights .arts a:hover { text-decoration: underline; }
   .ask { color: var(--ks-instrument-text); }
   .alt { border-top: 1px solid var(--ks-instrument-rule); padding-top: .8rem; display: grid; gap: .35rem; color: var(--ks-instrument-muted); line-height: 1.5; }
 </style>

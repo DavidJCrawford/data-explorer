@@ -40,3 +40,24 @@ export async function milestones() {
   if (!e) throw new Error('Docs/knowledge/law/eu-data-act/milestones.md is missing');
   return Object.fromEntries(e.data.milestones.map((m) => [m.id, m]));
 }
+
+/** A concept from the whole bundle by its path, e.g. 'law/eu-data-act/actors'. */
+export async function concept(id: string) {
+  const e = await getEntry('knowledge', id);
+  if (!e) throw new Error(`Docs/knowledge/${id}.md is missing`);
+  return e;
+}
+
+/** The Act's roles, by id (law/eu-data-act/actors.md). */
+export async function actors(): Promise<Record<string, string>> {
+  const list = (await concept('law/eu-data-act/actors')).data.actors as { id: string; name: string }[];
+  return Object.fromEntries(list.map((a) => [a.id, a.name]));
+}
+
+/** The Act's chapters, in order (law/eu-data-act/chapters.md). */
+export async function chapters(): Promise<{ numeral: string; name: string; articles: number[] }[]> {
+  return (await concept('law/eu-data-act/chapters')).data.chapters as { numeral: string; name: string; articles: number[] }[];
+}
+
+/** An article's page, by number. One helper, so no page builds this by hand. */
+export const articleHref = (n: number) => `/law/eu-data-act/article-${n}/`;

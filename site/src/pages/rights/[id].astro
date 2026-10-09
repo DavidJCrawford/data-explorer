@@ -1,0 +1,75 @@
+---
+/** One page per right (/rights/yours/): the right in plain words, when it
+ *  applies, the articles behind it, where it lives on the trace, and what
+ *  to ask beside it. */
+import type { GetStaticPaths } from 'astro';
+import Reference from '@layouts/Reference.astro';
+import { rights, articles, trace, articleHref } from '@lib/knowledge';
+import { section } from '@lib/rulebook-data';
+import { longDate } from '@lib/phases';
+import { getCollection } from 'astro:content';
+import { PLACES } from '@lib/section';
+import { u } from '@lib/url';
+import { kb } from '@lib/scope';
+
+export const getStaticPaths = (async () => (await rights()).map((r) => ({ params: { id: r.id } }))) satisfies GetStaticPaths;
+
+const all = await rights();
+const r = all.find((x) => x.id === Astro.params.id)!;
+const A = Object.fromEntries((await articles()).map((a) => [a.data.article, a]));
+const instruments = Object.fromEntries((await getCollection('instruments')).map((i) => [i.id, i]));
+const T = await trace();
+const stops = T.hops.filter((h) => r.data.attaches_to.includes(h.component));
+const alongside = r.data.attaches_to.filter((c) => !T.hops.some((h) => h.component === c));
+const body = section(r.body, 'The right').slice(1);
+const i = all.indexOf(r);
+---
+<Reference title={r.data.title} description={r.data.description}
+           eyebrow="What the owner is owed · EU Data Act"
+           crumbs={[{ href: '/rights/', label: 'The rights' }]}>
+  <Fragment slot="head">
+    <h1 class="statement">{r.data.title}</h1>
+    <p class="sub">{r.data.description}</p>
+  </Fragment>
+
+  {body.map((p) => <p>{p}</p>)}
+  <p class="register">Paraphrase. The articles below say it precisely.</p>
+
+  <h2>When</h2>
+  <table><tbody>
+    {r.data.phases.map((p) => <tr><th class="num">{longDate(p.date.toISOString().slice(0, 10))}</th><td>{p.what}</td></tr>)}
+  </tbody></table>
+
+  <h2>The law behind it</h2>
+  <ul class="plain-list">
+    {r.data.articles.map((n) => (
+      <li><a href={u(articleHref(n))}><b class="num">Article {n}</b> {A[n].data.title.replace(/^Article \d+ — /, '')}</a></li>
+    ))}
+  </ul>
+
+  <h2>Where it lives</h2>
+  <p>
+    {stops.map((h, k) => <>{k > 0 && ', '}<a href={u(`/trace/?hop=${h.n}`)}>Stop {h.n}, {PLACES[h.component].label}</a></>)}
+    {alongside.length > 0 && <>{stops.length ? '; alongside the path: ' : 'Alongside the path: '}{alongside.map((c) => PLACES[c]?.label ?? c).join(', ')}</>}.
+  </p>
+
+  {r.data.pairs_with.length > 0 && (
+    <>
+      <h2>What to ask beside it</h2>
+      {r.data.pairs_with.map((id) => (
+        <p><b>{instruments[id].data.title}</b>: {instruments[id].data.description} <a href={u(`/rulebook/?sel=${id}`)}>In the rulebook</a></p>
+      ))}
+    </>
+  )}
+
+  <p class="go"><a href={u(`/rulebook/?sel=${r.id}`)}>See it in the rulebook</a> · <a href={kb(`rights/${r.id}`)}>This right in the knowledge base</a></p>
+
+  <nav class="pager" aria-label="Rights">
+    <span>{all[i - 1] && <a href={u(`/rights/${all[i - 1].id}/`)}>← {all[i - 1].data.title}</a>}</span>
+    <span>{all[i + 1] && <a href={u(`/rights/${all[i + 1].id}/`)}>{all[i + 1].data.title} →</a>}</span>
+  </nav>
+</Reference>
+
+<style>
+  .statement { font-size: clamp(2.2rem, 5vw, 3.8rem) !important; }
+</style>

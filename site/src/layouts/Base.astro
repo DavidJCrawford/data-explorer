@@ -12,9 +12,10 @@ import Disclaimer from '@components/Disclaimer.astro';
 import '@styles/base.css';
 import '@styles/dse.css';
 
-interface Props { title: string; description?: string; chrome?: boolean; }
+interface Props { title: string; description?: string; chrome?: boolean; jsonld?: Record<string, unknown>; }
 const {
   title,
+  jsonld,
   description = 'Where a building’s data goes, who holds it at each step, and what the law says its owner is owed there.',
   chrome = true,
 } = Astro.props;
@@ -24,9 +25,26 @@ const {
 const NAV: { href: string; label: string }[] = [
   { href: '/trace/', label: 'Trace' },
   { href: '/rulebook/', label: 'Rulebook' },
+  { href: '/law/eu-data-act/', label: 'The Act' },
+  { href: '/sources/', label: 'Sources' },
 ];
 const path = Astro.url.pathname;
 const AUTHOR_URL = 'https://davidjcrawford.github.io/';
+
+/* Structured data: the site and its author on every page, plus whatever the
+   page says about itself, as one graph (SPEC §4.5). */
+const siteId = new URL(u('/'), Astro.site).href;
+const graph = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    { '@type': 'WebSite', '@id': `${siteId}#site`, name: SITE_NAME, url: siteId, inLanguage: 'en-GB',
+      description: 'Where a building’s data goes, who holds it at each step, and what the law says its owner is owed there.',
+      author: { '@id': `${AUTHOR_URL}#me` } },
+    { '@type': 'Person', '@id': `${AUTHOR_URL}#me`, name: 'David J Crawford', url: AUTHOR_URL },
+    { '@type': 'WebPage', '@id': new URL(Astro.url.pathname, Astro.site).href, name: title, description,
+      isPartOf: { '@id': `${siteId}#site` }, ...(jsonld ?? {}) },
+  ],
+};
 ---
 <!doctype html>
 <html lang="en-GB">
@@ -43,6 +61,8 @@ const AUTHOR_URL = 'https://davidjcrawford.github.io/';
     <Font cssVariable="--ks-font" preload />
     <Font cssVariable="--ks-font-display" preload />
     <Font cssVariable="--ks-mono" />
+    <script type="application/ld+json" set:html={JSON.stringify(graph)} />
+    <link rel="alternate" type="text/markdown" href={u('/index.md')} title="This site as markdown" />
     <slot name="head" />
   </head>
   <body class:list={{ bare: !chrome }}>

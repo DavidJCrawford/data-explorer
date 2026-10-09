@@ -1,6 +1,6 @@
 # HANDOFF — Data Explorer
 
-Written 2026-10-09 at the end of phase 1; updated after phases 2 to 5. Read [SPEC.md](SPEC.md) first; its §10
+Written 2026-10-09 at the end of phase 1; updated after phases 2 to 6. Read [SPEC.md](SPEC.md) first; its §10
 is the tracker. The content is the knowledge base in [knowledge/](knowledge/index.md).
 
 ## 0. Where this is up to
@@ -129,14 +129,31 @@ scripts/check_site.py        every internal link, unchanged from the siblings
   instruments now set `grid-template-columns: minmax(0, 1fr)` and let the
   readout truncate.
 
+- **The bundle is published at /knowledge/** (`pages/knowledge/[...path].ts`,
+  with `manifest.json`), and `kb()` now points there. A concept with
+  `publish: false` in its frontmatter is left out: the Trends Report article,
+  until it is published.
+- **Article pages are `/law/eu-data-act/article-N/`**, built through
+  `articleHref()` in `lib/knowledge.ts`; nothing builds that path by hand.
+- **`section()` (lib/rulebook-data.ts) extracts prose from a concept's body**
+  for pages: links reduced to words, footnotes and the bundle's own italic
+  register notes dropped. Bodies are never rendered raw, because their links
+  are bundle-relative and would be dead on the site.
+- **index.md is generated from the same functions as the pages**, so it
+  cannot drift. verify --dist scans it, llms.txt and the published bundle for
+  vendor names, not only the HTML.
+- **The sources page gathers its lists from the concepts' `sources`**, each
+  source once, leaving out background concepts (`on_site: false`) and the
+  prototype (credited separately).
+
 ## 3. Next
 
-Phase 6, reference pages and agent surfaces (SPEC §4.4, §4.5): an article page
-per article, a right page per right, the sources page, and llms.txt, the
-index.md twin and the raw bundle. When the bundle is published with the site,
-change `kb()` in `lib/scope.ts` to point at it. Still owed from phase 4:
-reduced motion, a hidden tab and a real phone checked by hand, and the
-"building lies down" transition.
+Phase 7, review and ship (SPEC §10): the disclaimer check is already enforced;
+freshness re-check before promotion (the Digital Omnibus goes stale on
+31 December 2026); an accessibility pass; the Trends Report link once it is
+published; the companion article. Still owed from phase 4: reduced motion, a
+hidden tab and a real phone checked by hand, and the "building lies down"
+transition.
 
 The siblings' HANDOFF lessons apply throughout; SPEC §7 lists the ones that
 bite this project.

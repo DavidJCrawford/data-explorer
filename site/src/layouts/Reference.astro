@@ -1,0 +1,55 @@
+---
+/** Reference pages (SPEC §4.4): the Act, its articles, the rights, the sources.
+ *  Paper, not instrument: these are the pages the trace and the rulebook are
+ *  an enhancement of, the ones that work without JavaScript, and the ones
+ *  search engines and agents land on. Each carries the full disclaimer.
+ *
+ *  `crumbs` are the path back up; `jsonld` is this page's own structured
+ *  data, added to the site-wide graph in Base. */
+import Base from '@layouts/Base.astro';
+import Disclaimer from '@components/Disclaimer.astro';
+import { u } from '@lib/url';
+
+interface Props {
+  title: string;
+  description?: string;
+  eyebrow?: string;
+  crumbs?: { href: string; label: string }[];
+  jsonld?: Record<string, unknown>;
+}
+const { title, description, eyebrow, crumbs = [], jsonld } = Astro.props;
+---
+<Base title={title} description={description} jsonld={jsonld}>
+  <article class="wrap ref">
+    {crumbs.length > 0 && (
+      <nav class="crumbs" aria-label="Breadcrumb">
+        {crumbs.map((c, i) => <>{i > 0 && <span aria-hidden="true"> / </span>}<a class="plain" href={u(c.href)}>{c.label}</a></>)}
+      </nav>
+    )}
+    {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+    <slot name="head" />
+    <div class="body"><slot /></div>
+    <Disclaimer full class="foot" />
+  </article>
+</Base>
+
+<style>
+  .ref { padding-block: clamp(24px, 4vh, 56px) clamp(40px, 6vh, 80px); }
+  .crumbs { font-size: var(--ks-type-label-size); color: var(--ks-text-faint); margin-bottom: 1.4rem; letter-spacing: .04em; }
+  .crumbs a { color: var(--ks-text-muted); }
+  .crumbs a:hover { color: var(--ks-ink); }
+  .body { max-width: var(--ks-measure); margin-top: 1.6rem; }
+  .ref :global(h1) { font-family: var(--ks-font-display), sans-serif; font-weight: 200; font-size: clamp(2.6rem, 6vw, 4.6rem); line-height: 1; color: var(--ks-ink); margin: .15em 0 0; }
+  .ref :global(.sub) { font-size: var(--ks-type-subhead-size); line-height: 1.4; color: var(--ks-text); margin: .7rem 0 0; max-width: 46em; text-wrap: pretty; }
+  .ref :global(h2) { font-size: var(--ks-type-eyebrow-size); letter-spacing: var(--ks-type-eyebrow-track); text-transform: uppercase; color: var(--ks-text-muted); font-weight: 500; margin: 2.4rem 0 .6rem; }
+  .ref :global(p) { margin: 0 0 .9em; text-wrap: pretty; }
+  .ref :global(.register) { font-size: var(--ks-type-label-size); color: var(--ks-text-faint); margin-top: -.4em; }
+  .ref :global(table) { width: 100%; border-collapse: collapse; font-size: var(--ks-type-small-size); }
+  .ref :global(th), .ref :global(td) { text-align: left; vertical-align: top; padding: 8px 12px 8px 0; border-bottom: 1px solid var(--ks-rule); font-weight: 400; }
+  .ref :global(th) { color: var(--ks-text-muted); width: 34%; }
+  .ref :global(ul.plain-list) { list-style: none; padding: 0; margin: 0; display: grid; gap: .5rem; }
+  .ref :global(.num) { font-variant-numeric: var(--f1-numeric); }
+  .ref :global(.pager) { display: flex; justify-content: space-between; gap: 16px; margin-top: 2.4rem; font-size: var(--ks-type-small-size); }
+  .ref :global(.go) { display: inline-flex; gap: 8px; margin-top: .6rem; }
+  .ref :global(.foot) { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--ks-rule); }
+</style>

@@ -1,0 +1,86 @@
+---
+/** Sources and method, after the siblings' sources pages: what the site draws
+ *  on, how the counts are made, what it is not. The lists are gathered from
+ *  each concept's `sources`, so this page cannot drift from the content. */
+import Reference from '@layouts/Reference.astro';
+import { getCollection } from 'astro:content';
+import { DISCLAIMER } from '@lib/disclaimer';
+import { u } from '@lib/url';
+import { kb } from '@lib/scope';
+
+const all = await getCollection('knowledge');
+const byId = Object.fromEntries(all.map((c) => [c.id, c]));
+/** External sources of the concepts under a prefix. Each source is listed
+ *  once, under the first group that cites it. Background concepts that are
+ *  not on the site (`on_site: false`), the unpublished article, and the
+ *  prototype the content came from (credited below) are left out. */
+const listed = new Set<string>();
+const PROTOTYPE = /stewardship-explorer/;
+function sourcesOf(prefixes: string[]) {
+  const out: { href: string; title: string }[] = [];
+  for (const c of all.filter((c) => prefixes.some((p) => c.id.startsWith(p)) && c.data.publish !== false && c.data.on_site !== false)) {
+    for (const s of c.data.sources ?? []) {
+      if (!/^https?:/.test(s.resource) || PROTOTYPE.test(s.resource) || listed.has(s.resource)) continue;
+      listed.add(s.resource);
+      out.push({ href: s.resource, title: s.title ?? s.resource });
+    }
+  }
+  return out;
+}
+const groups = [
+  { title: 'The EU Data Act', items: sourcesOf(['law/eu-data-act']) },
+  { title: 'Around it', items: sourcesOf(['law/wider-rulebook']) },
+  { title: 'Other countries', items: sourcesOf(['law/jurisdictions']) },
+  { title: 'The argument', items: sourcesOf(['thesis', 'references']) },
+];
+const checked = (id: string) => byId[id]?.data.generated?.at?.toISOString().slice(0, 10);
+---
+<Reference title="Sources" description="What the site draws on, how its counts are made, and what it is not.">
+  <Fragment slot="head">
+    <h1>Sources</h1>
+    <p class="sub">What the site draws on, how its counts are made, and what it is not.</p>
+  </Fragment>
+
+  <h2>Not legal advice</h2>
+  <p>{DISCLAIMER}</p>
+  <p>Each legal statement names its article or instrument and links to the official text. Summaries of the
+    law are marked as summaries, and plain readings as paraphrase. Dates were checked against the official
+    texts and other primary sources; the non-EU countries on {checked('law/jurisdictions/united-kingdom')}.</p>
+
+  <h2>The building and its counts</h2>
+  <p>The building, its systems and the two ways they can be built are illustrative: no real building and
+    no real vendor. Makers are lettered, not named. The counts follow fixed definitions, not a
+    measurement:</p>
+  <table><tbody>
+    <tr><th>Copies</th><td>Places a lasting copy of the event is kept: a log, a database, a replica, a backup, a model’s input. A reader holding an event for a moment is not a copy.</td></tr>
+    <tr><th>Companies</th><td>Organisations whose product or service holds a copy. A hosting provider under contract counts.</td></tr>
+    <tr><th>Handoffs</th><td>Stops where a company that did not hold the event before now does.</td></tr>
+  </tbody></table>
+  <p>Recipients the owner chooses are counted, but apart: they hold the data by the owner’s right, not
+    because of how the system was built. <a href={kb('thesis/copies-and-hands')}>The definitions</a> ·
+    <a href={kb('building/the-trace')}>the trace, hop by hop</a></p>
+
+  {groups.map((g) => g.items.length > 0 && (
+    <>
+      <h2>{g.title}</h2>
+      <ul class="plain-list">
+        {g.items.map((s) => <li><a href={s.href} rel="noopener">{s.title}</a></li>)}
+      </ul>
+    </>
+  ))}
+
+  <h2>How it is made</h2>
+  <p>Everything the site says comes from a knowledge base written in the
+    <a href="https://github.com/GoogleCloudPlatform/open-knowledge-format" rel="noopener">Open Knowledge Format</a>,
+    published here as it is: <a href={u('/knowledge/index.md')}>the index</a>,
+    <a href={u('/knowledge/manifest.json')}>a manifest</a> and <a href={u('/knowledge/log.md')}>the change log</a>.
+    The pages are built from it, and the build checks that what they say agrees with it. The source is
+    <a href="https://github.com/DavidJCrawford/data-explorer" rel="noopener">on GitHub</a>.</p>
+  <p>The design follows the author’s <a href="https://davidjcrawford.github.io/the-longest-journey/" rel="noopener">The Longest Journey</a>
+    and F1 Analysis; the content began in an earlier prototype,
+    <a href="https://github.com/DavidJCrawford/stewardship-explorer" rel="noopener">stewardship-explorer</a>.</p>
+
+  <h2>For agents</h2>
+  <p><a href={u('/llms.txt')}>llms.txt</a> · <a href={u('/index.md')}>the whole site as markdown</a> ·
+    <a href={u('/knowledge/manifest.json')}>the knowledge base’s manifest</a></p>
+</Reference>

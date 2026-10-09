@@ -154,10 +154,31 @@ function verifyBundle() {
   verifyTrace(concepts.get('building/the-trace'), components, rights);
   verifyMilestones(concepts.get('law/eu-data-act/milestones'), articles);
   verifyPhases(concepts.get('law/eu-data-act/milestones'), rights, instruments);
+  verifyStructure(concepts.get('law/eu-data-act/actors'), concepts.get('law/eu-data-act/chapters'), articles);
   verifyJurisdictions(byPrefix('law/jurisdictions/').map(([, c]) => c), rights, instruments);
 }
 
 const iso = (d) => new Date(d).toISOString().slice(0, 10);
+
+/** The Act's roles and chapters, as the article pages name them: the lists
+ *  in frontmatter agree with the tables a reader sees, every article's
+ *  `binds` names a role, and every article sits in the chapter that lists it. */
+function verifyStructure(actors, chapters, articles) {
+  if (!actors || !chapters) return fail('law/eu-data-act', 'actors or chapters missing');
+  const roles = actors.data.actors ?? [];
+  const tableRoles = [...actors.body.matchAll(/^\| ([^|]+?) \| [^|]+ \|$/gm)].map((m) => m[1]).filter((n) => n !== 'Role' && !/^-+$/.test(n));
+  if (roles.map((r) => r.name).join('|') !== tableRoles.join('|')) fail(actors.rel, `roles [${roles.map((r) => r.name)}] disagree with the table [${tableRoles}]`);
+  const roleIds = new Set(roles.map((r) => r.id));
+  const chs = chapters.data.chapters ?? [];
+  const tableChs = [...chapters.body.matchAll(/^\| ([IVX]+) \| ([^|]+?) \|/gm)].map((m) => `${m[1]} ${m[2]}`);
+  if (chs.map((c) => `${c.numeral} ${c.name}`).join('|') !== tableChs.join('|')) fail(chapters.rel, 'chapters disagree with the table');
+  for (const [n, a] of articles) {
+    for (const b of a.data.binds ?? []) if (!roleIds.has(b)) fail(a.rel, `binds “${b}”, which is not a role in actors.md`);
+    const ch = chs.find((c) => c.numeral === a.data.chapter);
+    if (!ch) fail(a.rel, `chapter ${a.data.chapter} is not in chapters.md`);
+    else if (!ch.articles.includes(n)) fail(a.rel, `chapter ${a.data.chapter} does not list Article ${n}`);
+  }
+}
 
 /** The rulebook's time axis: rights' phases fall on the Act's milestones, and
  *  instruments' phases match the Dates table a reader sees. */
@@ -280,12 +301,13 @@ function verifyTrace(t, components, rights) {
 
 function verifyDist() {
   if (!fs.existsSync(DIST)) return fail('dist', 'no build; run astro build first');
-  const pages = [];
+  const pages = [], texts = [];
   const walkHtml = (dir) => {
     for (const d of fs.readdirSync(dir, { withFileTypes: true })) {
       const p = path.join(dir, d.name);
       if (d.isDirectory()) { if (d.name !== 'pagefind') walkHtml(p); }
       else if (d.name.endsWith('.html')) pages.push(p);
+      else if (/\.(md|txt|xml|json)$/.test(d.name)) texts.push(p);
     }
   };
   walkHtml(DIST);
@@ -297,6 +319,8 @@ function verifyDist() {
     if (!html.includes('data-disclaimer')) fail(rel, 'no disclaimer (render <Disclaimer />)');
     scanVendors(rel, html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, ' ').replace(/<[^>]+>/g, ' '));
   }
+  // The agent surfaces and the published bundle name no vendor either.
+  for (const p of texts) scanVendors(path.relative(DIST, p), fs.readFileSync(p, 'utf8'));
   return pages.length;
 }
 

@@ -1,0 +1,57 @@
+---
+/** The Act as a reference document: what it gives a building's owner, its
+ *  dates, then every chapter with its articles. The no-JS form of the
+ *  rulebook's EU view, and the page agents and search land on. */
+import Reference from '@layouts/Reference.astro';
+import { articles, chapters, concept, milestones, articleHref } from '@lib/knowledge';
+import { section } from '@lib/rulebook-data';
+import { longDate } from '@lib/phases';
+import { u } from '@lib/url';
+import { kb, DATA_ACT_ELI } from '@lib/scope';
+
+const A = Object.fromEntries((await articles()).map((a) => [a.data.article, a]));
+const C = await chapters();
+const M = Object.values(await milestones());
+const overview = await concept('law/eu-data-act/overview');
+const today = new Date().toISOString().slice(0, 10);
+const plain = (n: number) => section(A[n].body, 'Plain reading')[0] ?? '';
+---
+<Reference title="The EU Data Act" description={overview.data.description}
+           eyebrow="Regulation (EU) 2023/2854"
+           jsonld={{ about: { '@type': 'Legislation', name: 'Regulation (EU) 2023/2854 (Data Act)', legislationIdentifier: '32023R2854', url: DATA_ACT_ELI } }}>
+  <Fragment slot="head">
+    <h1>The EU Data Act</h1>
+    <p class="sub">{overview.data.description}</p>
+  </Fragment>
+
+  {section(overview.body, 'Why it is the spine').map((p) => <p>{p}</p>)}
+  <p><a href={u('/rulebook/')}>See it laid along the building in the rulebook</a>, or <a href={u('/trace/')}>follow a door event through it</a>.</p>
+
+  <h2>Dates</h2>
+  <table>
+    <tbody>
+      {M.map((m) => {
+        const iso = m.date.toISOString().slice(0, 10);
+        return <tr><th class="num">{longDate(iso)}</th><td>{m.name}{iso <= today ? '' : ' (to come)'} · {m.articles.map((n, i) => <>{i > 0 && ', '}<a href={u(articleHref(n))}>Art. {n}</a></>)}</td></tr>;
+      })}
+    </tbody>
+  </table>
+  <p class="register">Amendments are proposed in the Digital Omnibus and are not agreed; the Act applies as written. <a href={kb('law/wider-rulebook/digital-omnibus')}>What is proposed</a>.</p>
+
+  {C.map((c) => (
+    <section>
+      <h2>Chapter {c.numeral} · {c.name}</h2>
+      <ul class="plain-list">
+        {c.articles.map((n) => (
+          <li><a href={u(articleHref(n))}><b class="num">Article {n}</b> {A[n].data.title.replace(/^Article \d+ — /, '')}</a><br /><span class="muted">{plain(n)}</span></li>
+        ))}
+      </ul>
+    </section>
+  ))}
+
+  <p class="go"><a href={DATA_ACT_ELI} rel="noopener">The Regulation in the Official Journal</a> · <a href={kb('law/eu-data-act/overview')}>The overview in the knowledge base</a></p>
+</Reference>
+
+<style>
+  .muted { color: var(--ks-text-muted); font-size: var(--ks-type-small-size); }
+</style>

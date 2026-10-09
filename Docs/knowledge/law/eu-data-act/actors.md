@@ -4,6 +4,16 @@ title: "The actors of the EU Data Act"
 description: "Seven roles the Act binds or empowers, and who plays them in a connected building."
 tags: [eu-data-act, actors, roles]
 legal_review: none
+# The roles as data: articles' `binds` name these ids. verify checks the
+# table below agrees.
+actors:
+  - { id: manufacturer, name: "Manufacturer" }
+  - { id: data-holder, name: "Data Holder" }
+  - { id: user, name: "User" }
+  - { id: third-party, name: "Third Party / Data Recipient" }
+  - { id: dps-provider, name: "Data Processing Service Provider" }
+  - { id: public-body, name: "Public Sector Body" }
+  - { id: authority, name: "Competent Authority / Data Coordinator" }
 generated: { by: claude-code/opus-5.5, at: "2026-10-09T00:00:00Z" }
 status: draft
 sources:

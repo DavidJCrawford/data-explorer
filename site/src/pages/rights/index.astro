@@ -1,0 +1,33 @@
+---
+/** The seven rights, in order, each with its articles and when it applies. */
+import Reference from '@layouts/Reference.astro';
+import { rights, articleHref } from '@lib/knowledge';
+import { longDate } from '@lib/phases';
+import { u } from '@lib/url';
+
+const R = await rights();
+---
+<Reference title="The rights" description="What the EU Data Act gives a connected building's owner or operator, in plain words."
+           eyebrow="What the owner is owed · EU Data Act">
+  <Fragment slot="head">
+    <h1>The rights</h1>
+    <p class="sub">What the EU Data Act gives a connected building’s owner or operator over the data its systems make. Written to the owner, in plain words; each one backed by articles.</p>
+  </Fragment>
+  <ul class="plain-list rights">
+    {R.map((r) => (
+      <li>
+        <a class="statement" href={u(`/rights/${r.id}/`)}>{r.data.title}</a>
+        <span class="sub2">{r.data.description}</span>
+        <span class="meta num">From {longDate(r.data.applies_from.toISOString().slice(0, 10))} · {r.data.articles.map((n, i) => <>{i > 0 && ', '}<a href={u(articleHref(n))}>Art. {n}</a></>)}</span>
+      </li>
+    ))}
+  </ul>
+</Reference>
+
+<style>
+  .rights { gap: 1.4rem !important; }
+  .rights li { display: grid; gap: .25rem; }
+  .statement { font-size: var(--ks-type-title-lg-size); line-height: 1.3; color: var(--ks-ink); }
+  .sub2 { color: var(--ks-text); }
+  .meta { font-size: var(--ks-type-label-size); color: var(--ks-text-muted); }
+</style>

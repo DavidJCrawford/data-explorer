@@ -7,6 +7,9 @@ author: human:davidjcrawford
 generated: { by: claude-code/opus-5.5, at: "2026-10-09T00:00:00Z" }
 verified: { by: human:davidjcrawford, at: "2026-10-09T00:00:00Z" }
 status: stable
+# Not yet published by the Trends Report: the site's /knowledge/ publication
+# leaves this file out until David says otherwise.
+publish: false
 ---
 
 # The text

@@ -4,9 +4,10 @@
 cloud and shows, at each step, who holds the data and what the building's
 owner is owed.**
 
-- **Status:** phases 1 to 5 built and deployed 2026-10-09: the scaffold,
+- **Status:** phases 1 to 6 built and deployed 2026-10-09: the scaffold,
   with every check in §5 running, the landing page, the section drawing,
-  the trace at `/trace/` and the rulebook at `/rulebook/`. §10 is the
+  the trace, the rulebook, and the reference pages and agent surfaces.
+  Phase 7 (review and ship) is what remains. §10 is the
   tracker; [HANDOFF.md](HANDOFF.md) is where it is up to.
 - **Content source:** [Docs/knowledge/](knowledge/index.md), an OKF v0.2
   bundle compiled from the prototype
@@ -441,9 +442,11 @@ Update this list as work lands; log detail in [knowledge/log.md](knowledge/log.m
 - [x] Trace cards link each right to it; the trace's finale links here
 
 **Phase 6: reference and agents**
-- [ ] Article and right pages; the Act index
-- [ ] Sources page
-- [ ] llms.txt, index.md twin, raw bundle with manifest, JSON-LD, robots, sitemap
+- [x] Article and right pages; the Act index (50 + 7 + 2 pages)
+- [x] Sources page, its lists gathered from the concepts' `sources`
+- [x] llms.txt, index.md twin, raw bundle with manifest, JSON-LD, robots, sitemap
+- [x] Trace cards and rulebook link each article to its page
+- [ ] Search across the reference pages (Pagefind builds the index; there is no search box yet)
 
 **Phase 7: review and ship**
 - [ ] Disclaimer on every legal surface, enforced by `verify` (§3.2.5)

@@ -22,10 +22,12 @@ export type { Phase } from './phases';
 export function section(body: string | undefined, heading: string): string[] {
   const s = body?.split(new RegExp(`^# ${heading}\\n`, 'm'))[1]?.split(/\n# /)[0] ?? '';
   return s.trim().split(/\n\n+/)
-    .filter((p) => p && !p.startsWith('|') && !p.startsWith('[^'))
+    // An italic-only paragraph is the bundle's own register note ("*Paraphrase.*");
+    // pages print their own, so drop it before emphasis is stripped.
+    .filter((p) => p && !p.startsWith('|') && !p.startsWith('[^') && !/^\*[^*].*\*$/.test(p.trim()))
     .map((p) => p.replace(/^>\s?/gm, '').replace(/\[\^[^\]]+\]/g, '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
       .replace(/\*\*?([^*]+)\*\*?/g, '$1').replace(/\s+/g, ' ').trim())
-    .filter((p) => p && !/^\*.*\*$/.test(p));
+    .filter(Boolean);
 }
 
 const phaseList = (ps: { date: Date; what: string }[] = []): Phase[] =>

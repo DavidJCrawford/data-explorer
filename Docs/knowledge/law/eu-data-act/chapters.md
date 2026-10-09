@@ -4,6 +4,20 @@ title: "The chapters of the EU Data Act"
 description: "Eleven chapters, fifty articles: the Regulation's own structure."
 resource: "https://eur-lex.europa.eu/eli/reg/2023/2854/oj/eng"
 tags: [eu-data-act, structure]
+# The structure as data: articles' `chapter` names these numerals. verify
+# checks the table below agrees.
+chapters:
+  - { numeral: "I", name: "General Provisions", articles: [1, 2] }
+  - { numeral: "II", name: "Business to Consumer and Business to Business Data Sharing", articles: [3, 4, 5, 6, 7] }
+  - { numeral: "III", name: "Obligations for Data Holders Obliged to Make Data Available Pursuant to Union Law", articles: [8, 9, 10, 11, 12] }
+  - { numeral: "IV", name: "Unfair Contractual Terms Related to Data Access and Use Between Enterprises", articles: [13] }
+  - { numeral: "V", name: "Making Data Available to Public Sector Bodies, the Commission, the ECB and Union Bodies on the Basis of an Exceptional Need", articles: [14, 15, 16, 17, 18, 19, 20, 21, 22] }
+  - { numeral: "VI", name: "Switching Between Data Processing Services", articles: [23, 24, 25, 26, 27, 28, 29, 30, 31] }
+  - { numeral: "VII", name: "Unlawful International Governmental Access and Transfer of Non-Personal Data", articles: [32] }
+  - { numeral: "VIII", name: "Interoperability", articles: [33, 34, 35, 36] }
+  - { numeral: "IX", name: "Implementation and Enforcement", articles: [37, 38, 39, 40, 41, 42] }
+  - { numeral: "X", name: "Sui Generis Right Under Directive 96/9/EC", articles: [43] }
+  - { numeral: "XI", name: "Final Provisions", articles: [44, 45, 46, 47, 48, 49, 50] }
 generated: { by: claude-code/opus-5.5, at: "2026-10-09T00:00:00Z" }
 status: stable
 sources:

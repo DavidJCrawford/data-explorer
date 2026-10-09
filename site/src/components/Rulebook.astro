@@ -102,6 +102,7 @@ const client = { range: D.range, dates: D.dates, views: D.views.map((v) => ({ id
                   <p>{a.precise}</p>
                   <p class="reg mono">Plain reading · paraphrase</p>
                   <p>{a.plain}</p>
+                  <p><a href={u(`/law/eu-data-act/article-${a.n}/`)}>Article {a.n} in full</a></p>
                 </details>
               ))}
             </div>
@@ -270,7 +271,7 @@ const client = { range: D.range, dates: D.dates, views: D.views.map((v) => ({ id
   .chip b { font-family: var(--ks-mono), monospace; color: var(--dse-event); font-weight: 500; }
   .chip:hover { border-color: var(--ks-instrument-muted); }
   .links { font-size: var(--ks-type-small-size); color: var(--ks-instrument-muted); }
-  .links a { color: var(--ks-instrument-text); }
+  .links a, details a { color: var(--ks-instrument-text); }
   .foot { margin-top: 24px; border-top: 1px solid var(--ks-instrument-rule); padding-top: 12px; }
 
   /* ── Phone: label above its strip; the drawer as a bottom sheet ── */
